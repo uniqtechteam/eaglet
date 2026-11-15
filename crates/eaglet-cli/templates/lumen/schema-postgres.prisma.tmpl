@@ -1,0 +1,19 @@
+// The data of {{title}}. After a change run `lumen migrate dev --name <what changed>`, which
+// writes a migration, applies it and updates src/db/client.rs.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "lumen"
+  output   = "../src/db/client.rs"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+}

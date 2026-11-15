@@ -1,0 +1,19 @@
+// The data of {{title}}. After a change run `lumen db push`, which creates the collections and
+// indexes and updates src/db/client.rs.
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "lumen"
+  output   = "../src/db/client.rs"
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+}

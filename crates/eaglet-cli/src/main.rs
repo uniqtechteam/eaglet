@@ -27,6 +27,9 @@ enum Command {
         /// Use a local eaglet checkout instead of crates.io (path to its `crates/eaglet`).
         #[arg(long, value_name = "DIR")]
         eaglet_path: Option<PathBuf>,
+        /// With `--db lumen-*`: a local lumen checkout (path to its `crates/lumen-orm`).
+        #[arg(long, value_name = "DIR")]
+        lumen_path: Option<PathBuf>,
         /// Print the files without writing them.
         #[arg(long)]
         dry_run: bool,
@@ -54,6 +57,10 @@ enum DbArg {
     Postgres,
     Sqlite,
     Mongo,
+    /// Postgres through lumen: `prisma/schema.prisma` and a generated client.
+    LumenPostgres,
+    /// MongoDB through lumen: `prisma/schema.prisma` and a generated client.
+    LumenMongo,
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -82,39 +89,56 @@ fn finish(plan: &Plan, dry_run: bool) -> Result<(), String> {
     Ok(())
 }
 
+/// A `--*-path` flag as a dependency source.
+fn local(path: Option<PathBuf>, flag: &str) -> Result<Source, String> {
+    match path {
+        Some(p) => {
+            let p = p
+                .canonicalize()
+                .map_err(|e| format!("{flag} {}: {e}", p.display()))?;
+            Ok(Source::Path(p.display().to_string()))
+        }
+        None => Ok(Source::Registry),
+    }
+}
+
 fn run(cli: Cli) -> Result<(), String> {
     match cli.command {
         Command::New {
             name,
             db,
             eaglet_path,
+            lumen_path,
             dry_run,
         } => {
-            let source = match eaglet_path {
-                Some(p) => {
-                    let p = p
-                        .canonicalize()
-                        .map_err(|e| format!("--eaglet-path {}: {e}", p.display()))?;
-                    Source::Path(p.display().to_string())
-                }
-                None => Source::Registry,
-            };
+            let source = local(eaglet_path, "--eaglet-path")?;
+            let lumen = local(lumen_path, "--lumen-path")?;
             let db = match db {
                 DbArg::None => Db::None,
                 DbArg::Postgres => Db::Postgres,
                 DbArg::Sqlite => Db::Sqlite,
                 DbArg::Mongo => Db::Mongo,
+                DbArg::LumenPostgres => Db::LumenPostgres,
+                DbArg::LumenMongo => Db::LumenMongo,
             };
             let plan = plan_new(
                 &std::env::current_dir().map_err(|e| e.to_string())?,
                 &name,
                 db,
-                &source,
+                (&source, &lumen),
             )?;
             finish(&plan, dry_run)?;
             if !dry_run {
+                let first = match db {
+                    Db::LumenPostgres => "lumen migrate dev --name init && ",
+                    Db::LumenMongo => "lumen db push && ",
+                    _ => "",
+                };
+                if !first.is_empty() {
+                    println!("\nlumen writes the database client: cargo install lumen-cli");
+                }
                 println!(
-                    "\nNext: cd {name} && cargo run   (API docs at http://localhost:3000/docs)"
+                    "\nNext: cd {name} && {first}cargo run   (API docs at http://localhost:3000/docs)"
                 );
             }
             Ok(())

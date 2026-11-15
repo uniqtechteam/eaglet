@@ -21,6 +21,16 @@ pub enum Db {
     Sqlite,
     /// A `mongodb::Database`.
     Mongo,
+    /// A lumen client for Postgres, generated from `prisma/schema.prisma`.
+    LumenPostgres,
+    /// A lumen client for MongoDB, generated from `prisma/schema.prisma`.
+    LumenMongo,
+}
+
+impl Db {
+    fn lumen(self) -> bool {
+        matches!(self, Self::LumenPostgres | Self::LumenMongo)
+    }
 }
 
 /// What `eaglet g` makes.
@@ -36,14 +46,17 @@ pub enum Kind {
     Resource,
 }
 
-/// Where the `eaglet` dependency of a new project comes from.
+/// Where the `eaglet` (or `lumen-orm`) dependency of a new project comes from.
 #[derive(Debug, Clone)]
 pub enum Source {
     /// From crates.io, this CLI's version.
     Registry,
-    /// A local checkout of the `eaglet` crate (for working on eaglet itself).
+    /// A local checkout of the crate (for working on eaglet or lumen itself).
     Path(String),
 }
+
+/// The version of `lumen-orm` that `--db lumen-*` projects use.
+pub const LUMEN_VERSION: &str = "0.1";
 
 fn render(template: &str, vars: &[(&str, &str)]) -> String {
     let mut out = template.to_owned();
@@ -85,9 +98,32 @@ fn eaglet_deps(source: &Source) -> (String, String) {
     }
 }
 
+/// The `lumen-orm` line for `[dependencies]`.
+fn lumen_dep(lumen: &Source, mongo: bool) -> String {
+    let features = if mongo {
+        ", features = [\"mongodb\"]"
+    } else {
+        ""
+    };
+    match lumen {
+        Source::Registry => format!("lumen-orm = {{ version = \"{LUMEN_VERSION}\"{features} }}\n"),
+        Source::Path(p) => format!("lumen-orm = {{ path = {p:?}{features} }}\n"),
+    }
+}
+
 /// The dependency lines, the `.env.example` line and the `src/db.rs` template for `--db`.
-fn db_setup(db: Db, krate: &str) -> (String, String, Option<&'static str>) {
+fn db_setup(db: Db, krate: &str, lumen: &Source) -> (String, String, Option<&'static str>) {
     match db {
+        Db::LumenPostgres => (
+            lumen_dep(lumen, false),
+            format!("DATABASE_URL=postgres://postgres:postgres@localhost/{krate}"),
+            Some(include_str!("../templates/lumen/postgres.rs.tmpl")),
+        ),
+        Db::LumenMongo => (
+            lumen_dep(lumen, true),
+            format!("DATABASE_URL=mongodb://localhost:27017/{krate}"),
+            Some(include_str!("../templates/lumen/mongo.rs.tmpl")),
+        ),
         Db::None => (String::new(), String::new(), None),
         Db::Postgres => (
             "sqlx = { version = \"0.9\", default-features = false, features = [\"runtime-tokio\", \"postgres\"] }\n".to_owned(),
@@ -111,7 +147,12 @@ fn db_setup(db: Db, krate: &str) -> (String, String, Option<&'static str>) {
 ///
 /// # Errors
 /// A bad name, or a folder that exists and is not empty.
-pub fn plan_new(parent: &Path, name: &str, db: Db, source: &Source) -> Result<Plan, String> {
+pub fn plan_new(
+    parent: &Path,
+    name: &str,
+    db: Db,
+    (source, lumen): (&Source, &Source),
+) -> Result<Plan, String> {
     let names = Names::parse(name)?;
     let root = parent.join(name);
     if root.read_dir().is_ok_and(|mut d| d.next().is_some()) {
@@ -123,7 +164,7 @@ pub fn plan_new(parent: &Path, name: &str, db: Db, source: &Source) -> Result<Pl
     let krate = names.snake.clone();
     let title = names.title();
     let (dep, dev_dep) = eaglet_deps(source);
-    let (db_deps, db_env, db_file) = db_setup(db, &krate);
+    let (db_deps, db_env, db_file) = db_setup(db, &krate, lumen);
     let vars = [
         ("crate", krate.as_str()),
         ("title", title.as_str()),
@@ -181,7 +222,24 @@ pub fn plan_new(parent: &Path, name: &str, db: Db, source: &Source) -> Result<Pl
     for (rel, template) in files {
         plan.create(rel, render(template, &vars))?;
     }
-    if let Some(template) = db_file {
+    if let Some(template) = db_file
+        && db.lumen()
+    {
+        let schema = if db == Db::LumenMongo {
+            include_str!("../templates/lumen/schema-mongo.prisma.tmpl")
+        } else {
+            include_str!("../templates/lumen/schema-postgres.prisma.tmpl")
+        };
+        plan.create("prisma/schema.prisma", render(schema, &vars))?;
+        plan.create("src/db/mod.rs", render(template, &vars))?;
+        plan.create(
+            "tests/db.rs",
+            render(include_str!("../templates/lumen/test.rs.tmpl"), &vars),
+        )?;
+        let lib = add_mod(&plan.read("src/lib.rs")?, "pub mod db;");
+        plan.update("src/lib.rs", lib)?;
+        register_in_app(&mut plan, "db", "LumenModule")?;
+    } else if let Some(template) = db_file {
         plan.create("src/db.rs", render(template, &vars))?;
         let lib = add_mod(&plan.read("src/lib.rs")?, "pub mod db;");
         plan.update("src/lib.rs", lib)?;
