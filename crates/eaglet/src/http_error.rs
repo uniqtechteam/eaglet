@@ -19,7 +19,11 @@ use crate::context;
 /// }
 /// ```
 #[derive(Debug, Clone)]
-pub struct HttpError {
+pub struct HttpError(Box<Inner>);
+
+/// Boxed so `Result<T, HttpError>` stays one pointer wide on the error side.
+#[derive(Debug, Clone)]
+struct Inner {
     status: StatusCode,
     code: Cow<'static, str>,
     message: Cow<'static, str>,
@@ -33,12 +37,12 @@ impl HttpError {
         code: impl Into<Cow<'static, str>>,
         message: impl Into<Cow<'static, str>>,
     ) -> Self {
-        Self {
+        Self(Box::new(Inner {
             status,
             code: code.into(),
             message: message.into(),
             details: None,
-        }
+        }))
     }
 
     /// 400 `BAD_REQUEST`.
@@ -89,32 +93,32 @@ impl HttpError {
     /// Attach machine-readable details, for example field errors.
     #[must_use]
     pub fn with_details(mut self, details: Value) -> Self {
-        self.details = Some(details);
+        self.0.details = Some(details);
         self
     }
 
     /// The HTTP status.
     #[must_use]
     pub fn status(&self) -> StatusCode {
-        self.status
+        self.0.status
     }
 
     /// The stable code, for example `UNAUTHORIZED`.
     #[must_use]
     pub fn code(&self) -> &str {
-        &self.code
+        &self.0.code
     }
 
     /// The message for people.
     #[must_use]
     pub fn message(&self) -> &str {
-        &self.message
+        &self.0.message
     }
 
     /// The details, if any.
     #[must_use]
     pub fn details(&self) -> Option<&Value> {
-        self.details.as_ref()
+        self.0.details.as_ref()
     }
 }
 
@@ -123,9 +127,9 @@ impl std::fmt::Display for HttpError {
         write!(
             f,
             "{} {}: {}",
-            self.status.as_u16(),
-            self.code,
-            self.message
+            self.0.status.as_u16(),
+            self.0.code,
+            self.0.message
         )
     }
 }
@@ -134,13 +138,19 @@ impl std::error::Error for HttpError {}
 
 impl IntoResponse for HttpError {
     fn into_response(self) -> Response {
+        let Inner {
+            status,
+            code,
+            message,
+            details,
+        } = *self.0;
         let body = json!({
-            "code": self.code,
-            "message": self.message,
-            "details": self.details,
+            "code": code,
+            "message": message,
+            "details": details,
             "traceId": context::trace_id(),
         });
-        (self.status, Json(body)).into_response()
+        (status, Json(body)).into_response()
     }
 }
 
@@ -155,5 +165,15 @@ pub(crate) fn code_for(status: StatusCode) -> Cow<'static, str> {
             .to_uppercase()
             .replace([' ', '-'], "_")
             .into(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::HttpError;
+
+    #[test]
+    fn an_error_is_one_pointer_wide() {
+        assert_eq!(size_of::<HttpError>(), size_of::<usize>());
     }
 }
