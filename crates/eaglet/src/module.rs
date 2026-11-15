@@ -3,6 +3,7 @@
 use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
 
+use crate::openapi::RouteDoc;
 use crate::{Container, Dep, Injectable, ProviderDef, StartupError};
 
 /// A module: what it imports, provides and exports. Implemented by `#[module]`.
@@ -41,6 +42,12 @@ pub trait Controller: Injectable {
     fn route_deps() -> Vec<Dep> {
         Vec::new()
     }
+
+    /// What the API docs say about each route.
+    #[must_use]
+    fn route_docs() -> Vec<RouteDoc> {
+        Vec::new()
+    }
 }
 
 /// Builds one controller's routes from the built providers.
@@ -55,6 +62,8 @@ pub struct ControllerDef {
     pub route_deps: Vec<Dep>,
     /// Builds its routes.
     pub router: RouterFn,
+    /// Describes its routes for the API docs.
+    pub docs: fn() -> Vec<RouteDoc>,
 }
 
 impl ControllerDef {
@@ -65,6 +74,7 @@ impl ControllerDef {
             provider: ProviderDef::of::<C>(),
             route_deps: C::route_deps(),
             router: C::router,
+            docs: C::route_docs,
         }
     }
 }
@@ -81,6 +91,7 @@ impl std::fmt::Debug for ControllerDef {
 pub(crate) struct Resolved {
     pub providers: Vec<ProviderDef>,
     pub routers: Vec<RouterFn>,
+    pub docs: Vec<fn() -> Vec<RouteDoc>>,
 }
 
 /// Every module reachable from the root, root first, each once.
@@ -207,6 +218,11 @@ pub(crate) fn resolve(
         .iter()
         .flat_map(|m| m.controllers.iter().map(|c| c.router))
         .collect();
+    let docs = graph
+        .modules
+        .iter()
+        .flat_map(|m| m.controllers.iter().map(|c| c.docs))
+        .collect();
 
     let all: Vec<ProviderDef> = all
         .into_iter()
@@ -215,6 +231,7 @@ pub(crate) fn resolve(
     Ok(Resolved {
         providers: order(&all)?,
         routers,
+        docs,
     })
 }
 

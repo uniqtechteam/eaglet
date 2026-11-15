@@ -5,7 +5,7 @@ members = ["crates/eaglet", "crates/eaglet-macros", "crates/eaglet-cli"]
 [workspace.package]
 version = "0.1.0-dev"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.88"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/uniqtechteam/eaglet"
 homepage = "https://github.com/uniqtechteam/eaglet"
@@ -30,6 +30,8 @@ tracing = "0.1"
 trybuild = "1"
 http-body-util = "0.1"
 validator = "0.21"
+utoipa = "5.5"
+jsonschema = { version = "0.61", default-features = false }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

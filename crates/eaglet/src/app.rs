@@ -5,18 +5,29 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::module::resolve;
+use crate::openapi::RouteDoc;
 use crate::{Container, Module, ModuleDef, ProviderDef, StartupError};
 
 /// A built eaglet application.
 pub struct App {
     container: Arc<Container>,
-    router: axum::Router,
+    routes: axum::Router,
+    docs: Vec<RouteDoc>,
+    title: String,
+    version: String,
+    #[cfg_attr(
+        not(feature = "swagger"),
+        allow(dead_code, reason = "set by .swagger()")
+    )]
+    swagger: Option<String>,
 }
 
 impl std::fmt::Debug for App {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("App")
             .field("container", &self.container)
+            .field("title", &self.title)
+            .field("routes", &self.docs.len())
             .finish_non_exhaustive()
     }
 }
@@ -47,15 +58,75 @@ impl App {
         self.container.get::<T>()
     }
 
+    /// The title and version shown in the API docs (by default the root module's name and `0.1.0`).
+    #[must_use]
+    pub fn with_info(mut self, title: impl Into<String>, version: impl Into<String>) -> Self {
+        self.title = title.into();
+        self.version = version.into();
+        self
+    }
+
+    /// The OpenAPI 3.1 document for every route, for example to write it to a file and generate a
+    /// client from it.
+    #[cfg(feature = "openapi")]
+    #[must_use]
+    pub fn openapi(&self) -> utoipa::openapi::OpenApi {
+        crate::openapi::document(&self.title, &self.version, &self.docs)
+    }
+
+    /// Serve Swagger UI at `path` and the OpenAPI document at `{path}/openapi.json`, like
+    /// `SwaggerModule.setup('docs', app, document)` in `NestJS`: `.swagger("/docs")`.
+    #[cfg(feature = "swagger")]
+    #[must_use]
+    pub fn swagger(mut self, path: &str) -> Self {
+        let path = format!("/{}", path.trim_matches('/'));
+        self.swagger = Some(path);
+        self
+    }
+
+    /// The finished router: the routes, the docs pages when switched on, and the request layer
+    /// that adds trace ids and the error envelope.
+    fn finish(&self) -> axum::Router {
+        #[allow(unused_mut, reason = "only changed with the swagger feature")]
+        let mut router = self.routes.clone();
+        #[cfg(feature = "swagger")]
+        if let Some(path) = &self.swagger {
+            router = router.merge(self.docs_routes(path));
+        }
+        router.layer(axum::middleware::from_fn(crate::context::request_context))
+    }
+
+    #[cfg(feature = "swagger")]
+    fn docs_routes(&self, path: &str) -> axum::Router {
+        use axum::http::header;
+        use axum::routing::get;
+
+        let base = if path == "/" { "" } else { path };
+        let json_path = format!("{base}/openapi.json");
+        let json = self.openapi().to_json().unwrap_or_else(|_| "{}".to_owned());
+        let html = crate::openapi::swagger_html(&self.title, &json_path);
+        let json_page = move || {
+            let json = json.clone();
+            async move { ([(header::CONTENT_TYPE, "application/json")], json) }
+        };
+        let html_page = move || {
+            let html = html.clone();
+            async move { axum::response::Html(html) }
+        };
+        axum::Router::new()
+            .route(path, get(html_page))
+            .route(&json_path, get(json_page))
+    }
+
     /// A copy of the router, for the in-memory test client.
     #[cfg(feature = "testing")]
     pub(crate) fn router(&self) -> axum::Router {
-        self.router.clone()
+        self.finish()
     }
 
     /// The Axum router, to serve it yourself or nest it into another router.
     pub fn into_router(self) -> axum::Router {
-        self.router
+        self.finish()
     }
 
     /// Serve the app on `addr` until the process stops.
@@ -64,7 +135,7 @@ impl App {
     /// When the address cannot be bound or the server fails.
     pub async fn listen(self, addr: impl tokio::net::ToSocketAddrs) -> std::io::Result<()> {
         let listener = tokio::net::TcpListener::bind(addr).await?;
-        axum::serve(listener, self.router).await
+        axum::serve(listener, self.into_router()).await
     }
 }
 
@@ -103,14 +174,17 @@ impl AppBuilder {
             let built = (provider.build)(&container).await?;
             container.insert(provider.key.id, built);
         }
-        let mut router = axum::Router::new();
+        let mut routes = axum::Router::new();
         for build_routes in resolved.routers {
-            router = router.merge(build_routes(&container)?);
+            routes = routes.merge(build_routes(&container)?);
         }
-        let router = router.layer(axum::middleware::from_fn(crate::context::request_context));
         Ok(App {
             container: Arc::new(container),
-            router,
+            routes,
+            docs: resolved.docs.iter().flat_map(|docs| docs()).collect(),
+            title: (self.root)().name.to_owned(),
+            version: "0.1.0".to_owned(),
+            swagger: None,
         })
     }
 }

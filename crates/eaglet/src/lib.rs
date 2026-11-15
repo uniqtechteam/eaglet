@@ -29,6 +29,7 @@ mod error;
 mod guard;
 mod http_error;
 mod module;
+mod openapi;
 #[cfg(feature = "testing")]
 pub mod testing;
 #[cfg(feature = "validate")]
@@ -51,7 +52,17 @@ pub use valid::Valid;
 #[doc(hidden)]
 pub mod __private {
     pub use crate::guard::{guard_method, guard_router};
+
+    /// Route descriptions for the API docs.
+    pub mod doc {
+        pub use crate::openapi::{Probe, ResponseDoc, RouteDoc, SchemaDoc, ViaAny, ViaToSchema};
+    }
 }
+
+/// utoipa, re-exported so apps can name the OpenAPI types (`eaglet::utoipa::openapi::OpenApi`).
+/// Derive `ToSchema` on DTOs with `utoipa` in your own dependencies.
+#[cfg(feature = "openapi")]
+pub use utoipa;
 
 /// Axum, re-exported so apps and generated code use the same version.
 pub use axum;

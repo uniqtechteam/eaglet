@@ -5,6 +5,8 @@ use quote::{format_ident, quote};
 use syn::punctuated::Punctuated;
 use syn::{Attribute, Expr, FnArg, Ident, ImplItem, ImplItemFn, ItemImpl, LitStr, Token, Type};
 
+use crate::doc::{RouteInfo, route_doc};
+
 const ROUTE_ATTRS: [&str; 5] = ["get", "post", "put", "patch", "delete"];
 
 /// Turn `/users` + `/:id/*rest` into Axum's `/users/{id}/{*rest}`.
@@ -97,6 +99,7 @@ struct Route {
     path: String,
     handler: TokenStream2,
     wrappers: Wrappers,
+    doc: TokenStream2,
 }
 
 fn route_attr_pos(attrs: &[Attribute]) -> Option<usize> {
@@ -106,7 +109,11 @@ fn route_attr_pos(attrs: &[Attribute]) -> Option<usize> {
 }
 
 /// The route declared on `method`, if it has a route attribute.
-fn take_route(prefix: &LitStr, method: &mut ImplItemFn) -> syn::Result<Option<Route>> {
+fn take_route(
+    prefix: &LitStr,
+    controller: &str,
+    method: &mut ImplItemFn,
+) -> syn::Result<Option<Route>> {
     let Some(pos) = route_attr_pos(&method.attrs) else {
         let wrappers = Wrappers::take(&mut method.attrs)?;
         if !wrappers.is_empty() {
@@ -166,11 +173,22 @@ fn take_route(prefix: &LitStr, method: &mut ImplItemFn) -> syn::Result<Option<Ro
             async move { #call }
         }
     }};
+    let path = route_path(&prefix.value(), &path.value());
+    let doc = route_doc(&RouteInfo {
+        verb: &verb,
+        path: &path,
+        method: name,
+        controller,
+        attrs: &method.attrs,
+        args: &arg_types,
+        output: &method.sig.output,
+    });
     Ok(Some(Route {
         verb,
-        path: route_path(&prefix.value(), &path.value()),
+        path,
         handler,
         wrappers,
+        doc,
     }))
 }
 
@@ -224,12 +242,21 @@ pub fn expand(prefix: &LitStr, mut item: ItemImpl) -> syn::Result<TokenStream2> 
     }
     let controller = Wrappers::take(&mut item.attrs)?;
     let self_ty = item.self_ty.clone();
+    let controller_name = match &*self_ty {
+        Type::Path(p) => p
+            .path
+            .segments
+            .last()
+            .map(|s| s.ident.to_string())
+            .unwrap_or_default(),
+        _ => String::new(),
+    };
     let mut routes: Vec<Route> = Vec::new();
     for impl_item in &mut item.items {
         let ImplItem::Fn(method) = impl_item else {
             continue;
         };
-        if let Some(route) = take_route(prefix, method)? {
+        if let Some(route) = take_route(prefix, &controller_name, method)? {
             routes.push(route);
         }
     }
@@ -239,6 +266,7 @@ pub fn expand(prefix: &LitStr, mut item: ItemImpl) -> syn::Result<TokenStream2> 
         .chain(routes.iter().flat_map(|r| &r.wrappers.guards))
         .collect();
     let calls = route_calls(&routes)?;
+    let docs: Vec<&TokenStream2> = routes.iter().map(|r| &r.doc).collect();
     let body = quote! { ::eaglet::axum::Router::new() #(#calls)* };
     // a router without routes cannot take route layers; its guards are still checked at startup
     let body = if routes.is_empty() {
@@ -257,6 +285,10 @@ pub fn expand(prefix: &LitStr, mut item: ItemImpl) -> syn::Result<TokenStream2> 
 
             fn route_deps() -> ::std::vec::Vec<::eaglet::Dep> {
                 ::std::vec![#(::eaglet::Dep::of::<#guards>()),*]
+            }
+
+            fn route_docs() -> ::std::vec::Vec<::eaglet::__private::doc::RouteDoc> {
+                ::std::vec![#(#docs),*]
             }
         }
     })

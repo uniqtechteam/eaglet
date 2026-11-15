@@ -22,9 +22,14 @@ serde_json.workspace = true
 validator = { workspace = true, optional = true }
 tower = { workspace = true, optional = true }
 http-body-util = { workspace = true, optional = true }
+utoipa = { workspace = true, optional = true }
 
 [features]
-default = ["validate"]
+default = ["validate", "swagger"]
+## `App::openapi()`: an OpenAPI 3.1 document built from the controllers.
+openapi = ["dep:utoipa"]
+## `App::swagger("/docs")`: Swagger UI and `/docs/openapi.json`.
+swagger = ["openapi"]
 ## `Valid<Json<T>>` and `Valid<Query<T>>`, checked with the `validator` crate.
 validate = ["dep:validator"]
 ## `eaglet::testing`: `TestApp`, provider overrides and an in-memory client. Turn it on in
@@ -37,6 +42,8 @@ trybuild.workspace = true
 validator = { workspace = true, features = ["derive"] }
 tower.workspace = true
 http-body-util.workspace = true
+utoipa.workspace = true
+jsonschema.workspace = true
 
 [lints]
 workspace = true

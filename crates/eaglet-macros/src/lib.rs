@@ -1,6 +1,7 @@
 //! Procedural macros for eaglet. Use them through the `eaglet` crate.
 
 mod controller;
+mod doc;
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;

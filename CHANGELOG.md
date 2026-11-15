@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+Needs Rust 1.88 or newer.
+
 ### Added
 
 - Project setup: the `eaglet` runtime, the `eaglet-macros` crate and the `eaglet` command line tool.
@@ -31,6 +33,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   message. Each request gets a trace id (or keeps a sane incoming `x-request-id`), returned in the
   `x-request-id` header and available from `eaglet::trace_id()`.
 - `#[layer(...)]` adds Tower layers to a controller or a route.
+- API docs, like `@nestjs/swagger`: `app.openapi()` builds an OpenAPI 3.1 document from the controllers
+  (paths, path and query parameters, JSON bodies, responses, doc comments as summaries, one tag per
+  controller, the error envelope as the default response), and `.swagger("/docs")` serves Swagger UI
+  with the JSON at `/docs/openapi.json`. DTOs that derive `utoipa::ToSchema` get full schemas; others
+  show as "any value", so nothing has to derive it. Features `openapi` and `swagger` (on by default).
 - `eaglet::testing` (the `testing` feature): `TestApp::new::<AppModule>()` builds the real module tree,
   `.override_provider::<dyn UsersRepo>(Arc::new(Fake))` or `.override_value(fake)` swaps providers (a
   wrong type does not compile), and `app.get("/users/1").send().await` runs requests in memory with
