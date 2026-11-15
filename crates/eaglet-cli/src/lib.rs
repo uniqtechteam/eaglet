@@ -90,12 +90,12 @@ fn db_setup(db: Db, krate: &str) -> (String, String, Option<&'static str>) {
     match db {
         Db::None => (String::new(), String::new(), None),
         Db::Postgres => (
-            "sqlx = { version = \"0.8\", default-features = false, features = [\"runtime-tokio\", \"postgres\"] }\n".to_owned(),
+            "sqlx = { version = \"0.9\", default-features = false, features = [\"runtime-tokio\", \"postgres\"] }\n".to_owned(),
             format!("DATABASE_URL=postgres://postgres:postgres@localhost/{krate}"),
             Some(include_str!("../templates/db/postgres.rs.tmpl")),
         ),
         Db::Sqlite => (
-            "sqlx = { version = \"0.8\", default-features = false, features = [\"runtime-tokio\", \"sqlite\"] }\n".to_owned(),
+            "sqlx = { version = \"0.9\", default-features = false, features = [\"runtime-tokio\", \"sqlite\"] }\n".to_owned(),
             format!("DATABASE_URL=sqlite://{krate}.db?mode=rwc"),
             Some(include_str!("../templates/db/sqlite.rs.tmpl")),
         ),

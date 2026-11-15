@@ -46,6 +46,10 @@ Needs Rust 1.88 or newer.
   with an in-memory version, validated DTOs, tests) and imports it in `AppModule`;
   `eaglet g module|controller|service <name>` add single parts. `--dry-run` shows the plan. Existing
   files are never overwritten.
+- `examples/shop`: sign-up, JWT sign-in with an `AuthGuard`, products only their seller can change,
+  SQLite through SQLx, validation, Swagger UI, and tests both against SQLite in memory and with fake
+  repositories.
+- Route methods no longer trip clippy's pedantic `unused_self`: eaglet always passes `&self`.
 - `eaglet::testing` (the `testing` feature): `TestApp::new::<AppModule>()` builds the real module tree,
   `.override_provider::<dyn UsersRepo>(Arc::new(Fake))` or `.override_value(fake)` swaps providers (a
   wrong type does not compile), and `app.get("/users/1").send().await` runs requests in memory with
