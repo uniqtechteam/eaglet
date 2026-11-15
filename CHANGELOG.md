@@ -28,7 +28,7 @@ Needs Rust 1.88 or newer.
   `parts.extensions`.
 - `Valid<Json<T>>` and `Valid<Query<T>>` check `#[validate(...)]` rules (the `validate` feature, on by
   default); a broken rule is a 422 `VALIDATION_FAILED` listing every field.
-- `HttpError` and one error shape for every failure, `{ code, message, details, traceId }`, including
+- `HttpError` (one pointer wide, so `Result<T, HttpError>` stays small) and one error shape for every failure, `{ code, message, details, traceId }`, including
   Axum's own 404, 405 and extractor rejections. Internal errors log the cause and send a generic
   message. Each request gets a trace id (or keeps a sane incoming `x-request-id`), returned in the
   `x-request-id` header and available from `eaglet::trace_id()`.
@@ -38,6 +38,14 @@ Needs Rust 1.88 or newer.
   controller, the error envelope as the default response), and `.swagger("/docs")` serves Swagger UI
   with the JSON at `/docs/openapi.json`. DTOs that derive `utoipa::ToSchema` get full schemas; others
   show as "any value", so nothing has to derive it. Features `openapi` and `swagger` (on by default).
+- The `eaglet` command line, like the Nest CLI. `eaglet new shop --db none|postgres|sqlite|mongo`
+  creates a project that builds, passes `cargo fmt`, `cargo clippy -D warnings` and its tests as
+  generated: `AppModule`, a config module, `/health`, Swagger UI at `/docs`, tests, a Dockerfile that
+  runs as a non-root user, and CI. Database pools connect on first use, so the app starts without a
+  database. `eaglet g resource products` adds a CRUD module (controller, service, repository trait
+  with an in-memory version, validated DTOs, tests) and imports it in `AppModule`;
+  `eaglet g module|controller|service <name>` add single parts. `--dry-run` shows the plan. Existing
+  files are never overwritten.
 - `eaglet::testing` (the `testing` feature): `TestApp::new::<AppModule>()` builds the real module tree,
   `.override_provider::<dyn UsersRepo>(Arc::new(Fake))` or `.override_value(fake)` swaps providers (a
   wrong type does not compile), and `app.get("/users/1").send().await` runs requests in memory with

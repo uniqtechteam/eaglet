@@ -42,6 +42,21 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace
 
+  generated:
+    name: generated projects (eaglet new + g)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-directories: target/generated
+      - run: cargo test -p eaglet-cli --test generated -- --ignored --test-threads 2
+        env:
+          EAGLET_GENERATED_TARGET: ${{ github.workspace }}/target/generated
+
   deny:
     name: cargo-deny
     runs-on: ubuntu-latest

@@ -1,0 +1,16 @@
+//! The `/{{path}}` routes.
+
+use eaglet::prelude::*;
+
+/// The HTTP side of {{plural_words}}.
+#[injectable]
+pub struct {{Plural}}Controller;
+
+#[controller("/{{path}}")]
+impl {{Plural}}Controller {
+    /// A first route; replace it with your own.
+    #[get("/")]
+    async fn index(&self) -> &'static str {
+        "{{plural_words}} works"
+    }
+}

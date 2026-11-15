@@ -1,0 +1,61 @@
+//! The rules for {{plural_words}}.
+
+use eaglet::prelude::*;
+
+use super::dto::{Create{{Singular}}, Update{{Singular}}, {{Singular}}};
+use super::repository::{{Plural}}Repo;
+
+/// Lists, finds, creates, changes and removes {{plural_words}}.
+#[injectable]
+pub struct {{Plural}}Service {
+    repo: Arc<dyn {{Plural}}Repo>,
+}
+
+impl {{Plural}}Service {
+    /// Every {{singular_words}}.
+    #[must_use]
+    pub fn list(&self) -> Vec<{{Singular}}> {
+        self.repo.list()
+    }
+
+    /// One {{singular_words}}.
+    ///
+    /// # Errors
+    /// `NOT_FOUND` when there is no {{singular_words}} with that id.
+    pub fn find(&self, id: u64) -> Result<{{Singular}}, HttpError> {
+        self.repo.get(id).ok_or_else(|| not_found(id))
+    }
+
+    /// Store a new {{singular_words}}.
+    pub fn create(&self, input: Create{{Singular}}) -> {{Singular}} {
+        self.repo.insert(input.name)
+    }
+
+    /// Change the fields that are given.
+    ///
+    /// # Errors
+    /// `NOT_FOUND` when there is no {{singular_words}} with that id.
+    pub fn update(&self, id: u64, input: Update{{Singular}}) -> Result<{{Singular}}, HttpError> {
+        let mut item = self.find(id)?;
+        if let Some(name) = input.name {
+            item.name = name;
+        }
+        self.repo.update(item).ok_or_else(|| not_found(id))
+    }
+
+    /// Remove a {{singular_words}}.
+    ///
+    /// # Errors
+    /// `NOT_FOUND` when there is no {{singular_words}} with that id.
+    pub fn remove(&self, id: u64) -> Result<(), HttpError> {
+        if self.repo.delete(id) {
+            Ok(())
+        } else {
+            Err(not_found(id))
+        }
+    }
+}
+
+fn not_found(id: u64) -> HttpError {
+    HttpError::not_found(format!("no {{singular_words}} with id {id}"))
+}

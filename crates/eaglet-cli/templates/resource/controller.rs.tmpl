@@ -1,0 +1,52 @@
+//! The `/{{path}}` routes.
+
+use eaglet::prelude::*;
+
+use super::dto::{Create{{Singular}}, Update{{Singular}}, {{Singular}}};
+use super::service::{{Plural}}Service;
+
+/// The HTTP side of {{plural_words}}.
+#[injectable]
+pub struct {{Plural}}Controller {
+    service: Arc<{{Plural}}Service>,
+}
+
+#[controller("/{{path}}")]
+impl {{Plural}}Controller {
+    /// List every {{singular_words}}.
+    #[get("/")]
+    async fn list(&self) -> Json<Vec<{{Singular}}>> {
+        Json(self.service.list())
+    }
+
+    /// Find one {{singular_words}} by id.
+    #[get("/:id")]
+    async fn find(&self, Path(id): Path<u64>) -> Result<Json<{{Singular}}>, HttpError> {
+        self.service.find(id).map(Json)
+    }
+
+    /// Create a {{singular_words}}.
+    #[post("/")]
+    async fn create(
+        &self,
+        Valid(Json(input)): Valid<Json<Create{{Singular}}>>,
+    ) -> (StatusCode, Json<{{Singular}}>) {
+        (StatusCode::CREATED, Json(self.service.create(input)))
+    }
+
+    /// Change a {{singular_words}}; fields left out stay as they are.
+    #[patch("/:id")]
+    async fn update(
+        &self,
+        Path(id): Path<u64>,
+        Valid(Json(input)): Valid<Json<Update{{Singular}}>>,
+    ) -> Result<Json<{{Singular}}>, HttpError> {
+        self.service.update(id, input).map(Json)
+    }
+
+    /// Remove a {{singular_words}}.
+    #[delete("/:id")]
+    async fn remove(&self, Path(id): Path<u64>) -> Result<StatusCode, HttpError> {
+        self.service.remove(id).map(|()| StatusCode::NO_CONTENT)
+    }
+}

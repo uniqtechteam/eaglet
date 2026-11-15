@@ -1,0 +1,18 @@
+use eaglet::prelude::*;
+use eaglet::testing::TestApp;
+use {{crate}}::app_module::AppModule;
+
+#[tokio::test]
+async fn health_is_ok() {
+    let app = TestApp::new::<AppModule>().build().await.unwrap();
+    let res = app.get("/health").send().await;
+    assert_eq!(res.status(), StatusCode::OK);
+    assert_eq!(res.json::<serde_json::Value>()["status"], "ok");
+}
+
+#[tokio::test]
+async fn the_api_docs_list_the_health_route() {
+    let app = App::new::<AppModule>().await.unwrap();
+    let doc = serde_json::to_value(app.openapi()).unwrap();
+    assert!(doc["paths"]["/health"]["get"].is_object());
+}

@@ -1,0 +1,26 @@
+//! Settings, read from the environment once at startup.
+
+use eaglet::prelude::*;
+
+/// Settings read from the environment.
+#[derive(Debug, Clone)]
+pub struct Config {
+    /// `PORT`, 3000 by default.
+    pub port: u16,
+}
+
+impl Config {
+    /// Read the settings from the environment.
+    #[must_use]
+    pub fn from_env() -> Self {
+        let port = std::env::var("PORT")
+            .ok()
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(3000);
+        Self { port }
+    }
+}
+
+/// Import this module to inject `Arc<Config>` into a provider.
+#[module(providers = [ProviderDef::value(Config::from_env())], exports = [Config])]
+pub struct ConfigModule;

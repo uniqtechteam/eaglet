@@ -1,0 +1,65 @@
+//! Where {{plural_words}} are stored. `Memory{{Plural}}Repo` keeps them in memory; write another
+//! `impl {{Plural}}Repo` for your database and provide it in `mod.rs` instead.
+
+use std::collections::BTreeMap;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{PoisonError, RwLock};
+
+use eaglet::prelude::*;
+
+use super::dto::{{Singular}};
+
+/// Storage for {{plural_words}}.
+pub trait {{Plural}}Repo: Send + Sync {
+    /// Every {{singular_words}}, by id.
+    fn list(&self) -> Vec<{{Singular}}>;
+    /// One {{singular_words}}, if it exists.
+    fn get(&self, id: u64) -> Option<{{Singular}}>;
+    /// Store a new {{singular_words}} and give it an id.
+    fn insert(&self, name: String) -> {{Singular}};
+    /// Replace a stored {{singular_words}}; `None` when it does not exist.
+    fn update(&self, item: {{Singular}}) -> Option<{{Singular}}>;
+    /// Remove a {{singular_words}}; `false` when it did not exist.
+    fn delete(&self, id: u64) -> bool;
+}
+
+/// Keeps {{plural_words}} in memory, for tests and first steps.
+#[injectable]
+pub struct Memory{{Plural}}Repo {
+    #[inject(default)]
+    rows: RwLock<BTreeMap<u64, {{Singular}}>>,
+    #[inject(default)]
+    last_id: AtomicU64,
+}
+
+impl {{Plural}}Repo for Memory{{Plural}}Repo {
+    fn list(&self) -> Vec<{{Singular}}> {
+        let rows = self.rows.read().unwrap_or_else(PoisonError::into_inner);
+        rows.values().cloned().collect()
+    }
+
+    fn get(&self, id: u64) -> Option<{{Singular}}> {
+        let rows = self.rows.read().unwrap_or_else(PoisonError::into_inner);
+        rows.get(&id).cloned()
+    }
+
+    fn insert(&self, name: String) -> {{Singular}} {
+        let id = self.last_id.fetch_add(1, Ordering::Relaxed) + 1;
+        let item = {{Singular}} { id, name };
+        let mut rows = self.rows.write().unwrap_or_else(PoisonError::into_inner);
+        rows.insert(id, item.clone());
+        item
+    }
+
+    fn update(&self, item: {{Singular}}) -> Option<{{Singular}}> {
+        let mut rows = self.rows.write().unwrap_or_else(PoisonError::into_inner);
+        let slot = rows.get_mut(&item.id)?;
+        *slot = item.clone();
+        Some(item)
+    }
+
+    fn delete(&self, id: u64) -> bool {
+        let mut rows = self.rows.write().unwrap_or_else(PoisonError::into_inner);
+        rows.remove(&id).is_some()
+    }
+}
