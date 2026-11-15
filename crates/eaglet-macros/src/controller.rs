@@ -143,6 +143,10 @@ fn take_route(
         )
     })?;
     let wrappers = Wrappers::take(&mut method.attrs)?;
+    // eaglet needs `&self` on every route, so a handler that does not use it is not a smell
+    method.attrs.push(syn::parse_quote! {
+        #[allow(clippy::unused_self, reason = "eaglet route handlers always take &self")]
+    });
     let mut inputs = method.sig.inputs.iter();
     match inputs.next() {
         Some(FnArg::Receiver(r)) if r.reference.is_some() && r.mutability.is_none() => {}
