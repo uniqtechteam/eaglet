@@ -1,0 +1,32 @@
+//! The database, through lumen. `lumen generate` writes the client for `prisma/schema.prisma` to
+//! `client.rs` here; run it again after changing the schema (`lumen db push` does). The driver
+//! connects on first use, so the app and its tests start without a server.
+
+use eaglet::prelude::*;
+use lumen_orm::mongo::MongoDb;
+
+#[rustfmt::skip]
+mod client;
+
+pub use client::*;
+
+/// Import this module to inject `Arc<Client>`.
+#[module(
+    providers = [ProviderDef::factory(|| async {
+        let url = std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "mongodb://localhost:27017/{{crate}}".to_owned());
+        Ok::<_, lumen_orm::Error>(Client::new(MongoDb::connect_url(&url).await?))
+    })],
+    exports = [Client]
+)]
+pub struct LumenModule;
+
+/// A lumen error as the HTTP error to answer with: `.map_err(db::http)?`. Nothing found is 404, a
+/// duplicate 409, a refused value 400; anything else is a 500 that hides the details.
+#[must_use]
+pub fn http(e: lumen_orm::Error) -> HttpError {
+    match StatusCode::from_u16(e.http_status()) {
+        Ok(status) if status.is_client_error() => HttpError::new(status, e.code, e.message.clone()),
+        _ => HttpError::internal(e),
+    }
+}

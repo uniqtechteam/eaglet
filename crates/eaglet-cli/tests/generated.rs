@@ -40,25 +40,51 @@ fn check(project: &Path) {
 }
 
 fn generated(db: &str) {
+    generated_with(db, None);
+}
+
+/// With `lumen`: the lumen checkout, whose `lumen generate` writes the client before the build.
+fn generated_with(db: &str, lumen: Option<&Path>) {
     let dir = std::env::temp_dir().join(format!("eaglet-generated-{db}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     let eaglet_crate = Path::new(env!("CARGO_MANIFEST_DIR")).join("../eaglet");
     let eaglet_crate = eaglet_crate.canonicalize().unwrap();
     let bin = env!("CARGO_BIN_EXE_eaglet");
-    run(
-        &dir,
-        bin,
-        &[
-            "new",
-            "demo",
-            "--db",
-            db,
-            "--eaglet-path",
-            eaglet_crate.to_str().unwrap(),
-        ],
-    );
+    let mut args = vec![
+        "new".to_owned(),
+        "demo".to_owned(),
+        "--db".to_owned(),
+        db.to_owned(),
+        "--eaglet-path".to_owned(),
+        eaglet_crate.display().to_string(),
+    ];
+    if let Some(lumen) = lumen {
+        args.push("--lumen-path".to_owned());
+        args.push(lumen.join("crates/lumen-orm").display().to_string());
+    }
+    let args: Vec<&str> = args.iter().map(String::as_str).collect();
+    run(&dir, bin, &args);
     let project = dir.join("demo");
+    if let Some(lumen) = lumen {
+        let manifest = lumen.join("Cargo.toml").display().to_string();
+        run(
+            &project,
+            "cargo",
+            &[
+                "run",
+                "-q",
+                "--manifest-path",
+                &manifest,
+                "-p",
+                "lumen-cli",
+                "--bin",
+                "lumen",
+                "--",
+                "generate",
+            ],
+        );
+    }
     check(&project);
     run(&project, bin, &["g", "resource", "products"]);
     run(&project, bin, &["g", "controller", "billing"]);
@@ -88,4 +114,30 @@ fn the_sqlite_project_builds_and_passes() {
 #[ignore = "builds a whole generated project with the mongodb driver; run with --ignored"]
 fn the_mongo_project_builds_and_passes() {
     generated("mongo");
+}
+
+/// The lumen checkout named by `EAGLET_TEST_LUMEN_DIR`. lumen is not on crates.io yet, so these
+/// projects build against a local checkout and are skipped without one.
+fn lumen_dir() -> Option<PathBuf> {
+    let dir = std::env::var_os("EAGLET_TEST_LUMEN_DIR").map(PathBuf::from);
+    if dir.is_none() {
+        eprintln!("skipped: EAGLET_TEST_LUMEN_DIR (a lumen checkout) is not set");
+    }
+    dir.map(|d| d.canonicalize().unwrap())
+}
+
+#[test]
+#[ignore = "builds a whole generated project with lumen; run with --ignored"]
+fn the_lumen_postgres_project_builds_and_passes() {
+    if let Some(lumen) = lumen_dir() {
+        generated_with("lumen-postgres", Some(&lumen));
+    }
+}
+
+#[test]
+#[ignore = "builds a whole generated project with lumen; run with --ignored"]
+fn the_lumen_mongo_project_builds_and_passes() {
+    if let Some(lumen) = lumen_dir() {
+        generated_with("lumen-mongo", Some(&lumen));
+    }
 }

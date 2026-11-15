@@ -46,6 +46,12 @@ Needs Rust 1.88 or newer.
   with an in-memory version, validated DTOs, tests) and imports it in `AppModule`;
   `eaglet g module|controller|service <name>` add single parts. `--dry-run` shows the plan. Existing
   files are never overwritten.
+- `eaglet new shop --db lumen-postgres|lumen-mongo`: the data lives in `prisma/schema.prisma` and
+  [lumen](https://github.com/uniqtechteam/lumen) generates the client. The project gets a
+  `LumenModule` that provides `Arc<Client>` (connecting on first use), a `db::http` function that
+  turns lumen errors into the right `HttpError` (404 for nothing found, 409 for a duplicate, 400 for a
+  refused value, a hidden 500 otherwise) and a test for it. `--lumen-path` builds against a local
+  lumen checkout.
 - `examples/shop`: sign-up, JWT sign-in with an `AuthGuard`, products only their seller can change,
   SQLite through SQLx, validation, Swagger UI, and tests both against SQLite in memory and with fake
   repositories.
