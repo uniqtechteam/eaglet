@@ -1,2 +1,2 @@
 # Words that are names, not code, in doc comments.
-doc-valid-idents = ["OpenAPI", "NestJS", ".."]
+doc-valid-idents = ["OpenAPI", "NestJS", "SQLx", "SQLite", "MongoDB", ".."]
