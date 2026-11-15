@@ -1,0 +1,54 @@
+use eaglet::prelude::*;
+use eaglet::testing::TestApp;
+use serde_json::{Value, json};
+use {{crate}}::app_module::AppModule;
+
+async fn app() -> TestApp {
+    TestApp::new::<AppModule>().build().await.unwrap()
+}
+
+#[tokio::test]
+async fn {{snake}}_can_be_created_found_changed_and_removed() {
+    let app = app().await;
+    let created = app
+        .post("/{{path}}")
+        .json(&json!({ "name": "First" }))
+        .send()
+        .await;
+    assert_eq!(created.status(), StatusCode::CREATED);
+    let id = created.json::<Value>()["id"].as_u64().unwrap();
+    let url = format!("/{{path}}/{id}");
+
+    assert_eq!(app.get(&url).send().await.json::<Value>()["name"], "First");
+    let changed = app
+        .patch(&url)
+        .json(&json!({ "name": "Second" }))
+        .send()
+        .await;
+    assert_eq!(changed.json::<Value>()["name"], "Second");
+    let listed = app.get("/{{path}}").send().await.json::<Vec<Value>>();
+    assert_eq!(listed.len(), 1);
+
+    assert_eq!(app.delete(&url).send().await.status(), StatusCode::NO_CONTENT);
+    assert_eq!(app.get(&url).send().await.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn an_empty_name_is_rejected() {
+    let app = app().await;
+    let res = app
+        .post("/{{path}}")
+        .json(&json!({ "name": "" }))
+        .send()
+        .await;
+    assert_eq!(res.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(res.json::<Value>()["details"]["fields"]["name"].is_array());
+}
+
+#[tokio::test]
+async fn the_api_docs_list_the_{{snake}}_routes() {
+    let app = App::new::<AppModule>().await.unwrap();
+    let doc = serde_json::to_value(app.openapi()).unwrap();
+    assert!(doc["paths"]["/{{path}}"]["post"].is_object());
+    assert!(doc["paths"]["/{{path}}/{id}"]["patch"].is_object());
+}

@@ -1,0 +1,19 @@
+# {{title}}
+
+An API built with [eaglet](https://github.com/uniqtechteam/eaglet).
+
+```bash
+cargo run            # http://localhost:3000, API docs at http://localhost:3000/docs
+cargo test
+```
+
+Add a feature with the eaglet command line:
+
+```bash
+eaglet g resource products   # module, controller, service, DTOs and tests, added to AppModule
+eaglet g module billing
+eaglet g controller billing
+eaglet g service billing
+```
+
+Settings come from the environment; see `.env.example`.

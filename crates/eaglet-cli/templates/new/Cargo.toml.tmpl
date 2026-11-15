@@ -1,0 +1,19 @@
+[package]
+name = "{{crate}}"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+
+[dependencies]
+eaglet = {{eaglet_dep}}
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+utoipa = "5.5"
+validator = { version = "0.21", features = ["derive"] }
+{{db_deps}}
+[dev-dependencies]
+eaglet = {{eaglet_dev_dep}}

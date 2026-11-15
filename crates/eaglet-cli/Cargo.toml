@@ -11,6 +11,10 @@ authors.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[lib]
+name = "eaglet_cli"
+path = "src/lib.rs"
+
 [[bin]]
 name = "eaglet"
 path = "src/main.rs"

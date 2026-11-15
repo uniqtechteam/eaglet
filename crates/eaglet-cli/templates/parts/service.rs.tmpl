@@ -1,0 +1,15 @@
+//! The rules for {{plural_words}}.
+
+use eaglet::prelude::*;
+
+/// Business rules for {{plural_words}}; inject it with `Arc<{{Plural}}Service>`.
+#[injectable]
+pub struct {{Plural}}Service;
+
+impl {{Plural}}Service {
+    /// A first method; replace it with your own.
+    #[must_use]
+    pub fn hello(&self) -> &'static str {
+        "hello from {{Plural}}Service"
+    }
+}

@@ -1,0 +1,26 @@
+//! {{Plural}}: create, list, find, change and remove {{plural_words}} at `/{{path}}`.
+
+mod controller;
+mod dto;
+mod repository;
+mod service;
+
+use eaglet::prelude::*;
+
+pub use controller::{{Plural}}Controller;
+pub use dto::{Create{{Singular}}, Update{{Singular}}, {{Singular}}};
+pub use repository::{Memory{{Plural}}Repo, {{Plural}}Repo};
+pub use service::{{Plural}}Service;
+
+/// Everything about {{plural_words}}. Swap `Memory{{Plural}}Repo` for your database implementation here.
+#[module(
+    controllers = [
+        {{Plural}}Controller,
+    ],
+    providers = [
+        {{Plural}}Service,
+        provide!(dyn {{Plural}}Repo => Memory{{Plural}}Repo),
+    ],
+    exports = [{{Plural}}Service]
+)]
+pub struct {{Plural}}Module;

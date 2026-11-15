@@ -1,0 +1,17 @@
+//! The MongoDB database, from `DATABASE_URL`. The driver connects on first use, so the app and its
+//! tests start without a server.
+
+use eaglet::prelude::*;
+use mongodb::{Client, Database};
+
+/// Import this module to inject `Arc<Database>`.
+#[module(
+    providers = [ProviderDef::factory(|| async {
+        let url = std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "mongodb://localhost:27017".to_owned());
+        let client = Client::with_uri_str(&url).await?;
+        Ok::<_, mongodb::error::Error>(client.database("{{crate}}"))
+    })],
+    exports = [Database]
+)]
+pub struct DbModule;

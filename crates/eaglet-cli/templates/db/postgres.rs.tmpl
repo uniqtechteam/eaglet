@@ -1,0 +1,17 @@
+//! The Postgres pool, from `DATABASE_URL`. It connects on first use, so the app and its tests start
+//! without a database.
+
+use eaglet::prelude::*;
+use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
+
+/// Import this module to inject `Arc<PgPool>`.
+#[module(
+    providers = [ProviderDef::factory(|| async {
+        let url = std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "postgres://postgres:postgres@localhost/{{crate}}".to_owned());
+        PgPoolOptions::new().max_connections(10).connect_lazy(&url)
+    })],
+    exports = [PgPool]
+)]
+pub struct DbModule;

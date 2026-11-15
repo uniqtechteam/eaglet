@@ -1,0 +1,17 @@
+//! The SQLite pool, from `DATABASE_URL`. It connects on first use, so the app and its tests start
+//! without a database file.
+
+use eaglet::prelude::*;
+use sqlx::SqlitePool;
+use sqlx::sqlite::SqlitePoolOptions;
+
+/// Import this module to inject `Arc<SqlitePool>`.
+#[module(
+    providers = [ProviderDef::factory(|| async {
+        let url = std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "sqlite://{{crate}}.db?mode=rwc".to_owned());
+        SqlitePoolOptions::new().max_connections(5).connect_lazy(&url)
+    })],
+    exports = [SqlitePool]
+)]
+pub struct DbModule;

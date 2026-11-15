@@ -1,0 +1,15 @@
+//! The root module. `eaglet g` adds every new feature module to its imports.
+
+use eaglet::prelude::*;
+
+use crate::config::ConfigModule;
+use crate::health::HealthModule;
+
+/// The root of the module tree.
+#[module(
+    imports = [
+        ConfigModule,
+        HealthModule,
+    ]
+)]
+pub struct AppModule;

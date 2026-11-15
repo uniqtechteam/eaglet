@@ -1,0 +1,29 @@
+//! Health check: `GET /health`.
+
+use eaglet::prelude::*;
+use serde::Serialize;
+use utoipa::ToSchema;
+
+/// The health response.
+#[derive(Serialize, ToSchema)]
+pub struct Health {
+    /// `ok` while the server runs.
+    pub status: &'static str,
+}
+
+/// Answers load balancers and uptime checks.
+#[injectable]
+pub struct HealthController;
+
+#[controller("/health")]
+impl HealthController {
+    /// Tell load balancers the server is up.
+    #[get("/")]
+    async fn check(&self) -> Json<Health> {
+        Json(Health { status: "ok" })
+    }
+}
+
+/// The health check.
+#[module(controllers = [HealthController])]
+pub struct HealthModule;
