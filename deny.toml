@@ -5,6 +5,11 @@ all-features = true
 [advisories]
 version = 2
 yanked = "deny"
+ignore = [
+    # proc-macro-error2 is unmaintained (no fix exists). It only runs at compile time inside
+    # validator's derive macro; revisit when validator drops it.
+    { id = "RUSTSEC-2026-0173", reason = "compile-time only, via validator_derive; no maintained release yet" },
+]
 
 [licenses]
 version = 2
