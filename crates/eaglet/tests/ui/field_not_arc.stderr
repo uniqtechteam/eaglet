@@ -1,0 +1,5 @@
+error: a provider's fields must be `Arc<SomeProvider>` (or mark the field #[inject(default)])
+ --> tests/ui/field_not_arc.rs:5:12
+  |
+5 |     count: u32,
+  |            ^^^

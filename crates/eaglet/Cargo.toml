@@ -13,6 +13,13 @@ categories.workspace = true
 
 [dependencies]
 eaglet-macros.workspace = true
+axum.workspace = true
+tokio.workspace = true
+futures.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+trybuild.workspace = true
 
 [lints]
 workspace = true
