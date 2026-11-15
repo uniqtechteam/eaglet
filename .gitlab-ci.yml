@@ -1,0 +1,57 @@
+# CI on our own GitLab runner (Linux). GitHub Actions is off while the repo is private.
+
+default:
+  image: rust:1-bookworm
+  interruptible: true
+  before_script:
+    - rustup component add rustfmt clippy
+  cache:
+    key: cargo-$CI_JOB_NAME
+    paths: [.cargo/registry, .cargo/git, target/]
+
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/.cargo
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+lint:
+  script:
+    - cargo fmt --all --check
+    - cargo clippy --workspace --all-targets -- -D warnings
+    - cargo clippy -p eaglet --lib --no-default-features -- -D warnings
+    - cargo clippy -p eaglet --lib --no-default-features --features openapi -- -D warnings
+    - cargo clippy -p eaglet --lib --all-features -- -D warnings
+
+test:
+  script:
+    - cargo test --workspace
+
+# eaglet new + eaglet g, built and tested as generated
+generated:
+  variables:
+    EAGLET_GENERATED_TARGET: $CI_PROJECT_DIR/target/generated
+  script:
+    - cargo test -p eaglet-cli --test generated -- --ignored --test-threads 2
+
+# The --db lumen-* projects, built against lumen from this GitLab. Runs when the project
+# variable LUMEN_REF names a lumen branch (main once the lumen stack is merged); lumen must allow
+# this project's job token (lumen > Settings > CI/CD > Job token permissions).
+lumen-projects:
+  rules:
+    - if: $LUMEN_REF
+  variables:
+    EAGLET_GENERATED_TARGET: $CI_PROJECT_DIR/target/generated
+    EAGLET_TEST_LUMEN_DIR: $CI_PROJECT_DIR/../lumen
+  script:
+    - git clone --depth 1 --branch "$LUMEN_REF" "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/uniqtechteam/lumen.git" "$EAGLET_TEST_LUMEN_DIR"
+    - cargo test -p eaglet-cli --test generated -- --ignored lumen --test-threads 2
+
+deny:
+  script:
+    - cargo install --locked cargo-deny
+    - cargo deny check
