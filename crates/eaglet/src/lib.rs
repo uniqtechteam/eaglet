@@ -24,14 +24,32 @@ extern crate self as eaglet;
 
 mod app;
 mod container;
+mod context;
 mod error;
+mod guard;
+mod http_error;
 mod module;
+#[cfg(feature = "validate")]
+mod valid;
 
 pub use app::{App, AppBuilder};
 pub use container::{Container, Dep, Injectable, ProviderDef, short_type_name};
-pub use eaglet_macros::{controller, delete, get, injectable, module, patch, post, put};
+pub use context::{REQUEST_ID_HEADER, trace_id};
+pub use eaglet_macros::{
+    controller, delete, get, guard, injectable, layer, module, patch, post, put,
+};
 pub use error::StartupError;
+pub use guard::Guard;
+pub use http_error::HttpError;
 pub use module::{Controller, ControllerDef, Module, ModuleDef, RouterFn};
+#[cfg(feature = "validate")]
+pub use valid::Valid;
+
+/// Used by the code the macros generate; not a stable API.
+#[doc(hidden)]
+pub mod __private {
+    pub use crate::guard::{guard_method, guard_router};
+}
 
 /// Axum, re-exported so apps and generated code use the same version.
 pub use axum;
@@ -51,11 +69,15 @@ macro_rules! provide {
 
 /// Everything an app usually needs: `use eaglet::prelude::*;`.
 pub mod prelude {
+    #[cfg(feature = "validate")]
+    pub use crate::Valid;
     pub use crate::{
-        App, ProviderDef, StartupError, controller, delete, get, injectable, module, patch, post,
-        provide, put,
+        App, Guard, HttpError, ProviderDef, StartupError, controller, delete, get, guard,
+        injectable, layer, module, patch, post, provide, put,
     };
     pub use axum::Json;
-    pub use axum::extract::{Path, Query};
+    pub use axum::extract::{Extension, Path, Query};
+    pub use axum::http::StatusCode;
+    pub use axum::http::request::Parts;
     pub use std::sync::Arc;
 }

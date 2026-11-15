@@ -29,6 +29,7 @@ futures = "0.3"
 tracing = "0.1"
 trybuild = "1"
 http-body-util = "0.1"
+validator = "0.21"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

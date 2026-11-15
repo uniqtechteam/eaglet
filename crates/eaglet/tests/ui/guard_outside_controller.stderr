@@ -1,0 +1,7 @@
+error: #[guard] only works inside an `impl` block marked #[controller("/prefix")]; put it below #[controller]
+ --> tests/ui/guard_outside_controller.rs:8:1
+  |
+8 | #[guard(AuthGuard)]
+  | ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `guard` (in Nightly builds, run with -Z macro-backtrace for more info)

@@ -17,11 +17,18 @@ axum.workspace = true
 tokio.workspace = true
 futures.workspace = true
 tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+validator = { workspace = true, optional = true }
+
+[features]
+default = ["validate"]
+## `Valid<Json<T>>` and `Valid<Query<T>>`, checked with the `validator` crate.
+validate = ["dep:validator"]
 
 [dev-dependencies]
 trybuild.workspace = true
-serde.workspace = true
-serde_json.workspace = true
+validator = { workspace = true, features = ["derive"] }
 tower.workspace = true
 http-body-util.workspace = true
 

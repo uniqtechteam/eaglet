@@ -1,4 +1,4 @@
-error: #[get] only works on a method inside an `impl` block marked #[controller("/prefix")]
+error: #[get] only works inside an `impl` block marked #[controller("/prefix")]; put it below #[controller]
  --> tests/ui/route_outside_controller.rs:3:1
   |
 3 | #[get("/")]

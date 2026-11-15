@@ -1,13 +1,15 @@
 //! Procedural macros for eaglet. Use them through the `eaglet` crate.
 
+mod controller;
+
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::{
-    Expr, Fields, FnArg, GenericArgument, Ident, ImplItem, ItemImpl, ItemStruct, LitStr,
-    PathArguments, Token, Type, bracketed, parse_macro_input,
+    Expr, Fields, GenericArgument, Ident, ItemImpl, ItemStruct, LitStr, PathArguments, Token, Type,
+    bracketed, parse_macro_input,
 };
 
 /// Make a struct a provider. Its fields are other providers held as `Arc<T>` (or `Arc<dyn Trait>`);
@@ -218,46 +220,12 @@ fn expand_module(args: &ModuleArgs, item: &ItemStruct) -> syn::Result<TokenStrea
     })
 }
 
-const ROUTE_ATTRS: [&str; 5] = ["get", "post", "put", "patch", "delete"];
-
-/// Turn `/users` + `/:id/*rest` into Axum's `/users/{id}/{*rest}`.
-fn route_path(prefix: &str, path: &str) -> String {
-    let joined = format!(
-        "{}/{}",
-        prefix.trim_end_matches('/'),
-        path.trim_start_matches('/')
-    );
-    let segments: Vec<String> = joined
-        .split('/')
-        .map(|seg| {
-            if let Some(name) = seg.strip_prefix(':') {
-                format!("{{{name}}}")
-            } else if let Some(name) = seg.strip_prefix('*') {
-                format!("{{*{name}}}")
-            } else {
-                seg.to_owned()
-            }
-        })
-        .collect();
-    let path = segments.join("/");
-    let path = path.trim_end_matches('/');
-    if path.is_empty() {
-        "/".to_owned()
-    } else {
-        path.to_owned()
-    }
-}
-
-/// One route found in a controller.
-struct Route {
-    method: Ident,
-    path: String,
-    handler: TokenStream2,
-}
-
 /// Mark an `impl` block as a controller and give it a path prefix. Its methods with `#[get]`,
 /// `#[post]`, `#[put]`, `#[patch]` or `#[delete]` become routes; they take `&self` and any Axum
 /// extractors. The struct itself must be `#[injectable]`.
+///
+/// Below `#[controller]`, and on route methods, `#[guard(AuthGuard)]` adds guards (the first written
+/// runs first) and `#[layer(...)]` adds Tower layers, which run outside the guards.
 ///
 /// ```ignore
 /// #[controller("/users")]
@@ -270,115 +238,15 @@ struct Route {
 pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
     let prefix = parse_macro_input!(attr as LitStr);
     let item = parse_macro_input!(item as ItemImpl);
-    expand_controller(&prefix, item)
+    controller::expand(&prefix, item)
         .unwrap_or_else(syn::Error::into_compile_error)
         .into()
-}
-
-fn expand_controller(prefix: &LitStr, mut item: ItemImpl) -> syn::Result<TokenStream2> {
-    if let Some((_, path, _)) = &item.trait_ {
-        return Err(syn::Error::new_spanned(
-            path,
-            "#[controller] goes on a plain `impl` block, not a trait impl",
-        ));
-    }
-    let self_ty = item.self_ty.clone();
-    let mut routes: Vec<Route> = Vec::new();
-    for impl_item in &mut item.items {
-        let ImplItem::Fn(method) = impl_item else {
-            continue;
-        };
-        let Some(pos) = method
-            .attrs
-            .iter()
-            .position(|a| ROUTE_ATTRS.iter().any(|r| a.path().is_ident(r)))
-        else {
-            continue;
-        };
-        let attr = method.attrs.remove(pos);
-        let verb = attr
-            .path()
-            .get_ident()
-            .cloned()
-            .ok_or_else(|| syn::Error::new_spanned(&attr, "expected a route attribute"))?;
-        let path: LitStr = attr.parse_args().map_err(|_| {
-            syn::Error::new_spanned(
-                &attr,
-                format!("write the path as a string, for example #[{verb}(\"/:id\")]"),
-            )
-        })?;
-        let mut inputs = method.sig.inputs.iter();
-        match inputs.next() {
-            Some(FnArg::Receiver(r)) if r.reference.is_some() && r.mutability.is_none() => {}
-            _ => {
-                return Err(syn::Error::new_spanned(
-                    &method.sig,
-                    "route handlers take `&self` first, then Axum extractors",
-                ));
-            }
-        }
-        let mut names = Vec::new();
-        let mut arg_types = Vec::new();
-        for (i, arg) in inputs.enumerate() {
-            let FnArg::Typed(typed) = arg else { continue };
-            names.push(quote::format_ident!("__eaglet_arg{}", i));
-            arg_types.push(typed.ty.clone());
-        }
-        let name = &method.sig.ident;
-        let call = if method.sig.asyncness.is_some() {
-            quote! { this.#name(#(#names),*).await }
-        } else {
-            quote! { this.#name(#(#names),*) }
-        };
-        let handler = quote! {{
-            let this = ::std::sync::Arc::clone(&this);
-            move |#(#names: #arg_types),*| {
-                let this = ::std::sync::Arc::clone(&this);
-                async move { #call }
-            }
-        }};
-        routes.push(Route {
-            method: verb,
-            path: route_path(&prefix.value(), &path.value()),
-            handler,
-        });
-    }
-    // one method router per path: get(a).post(b)
-    let mut paths: Vec<String> = Vec::new();
-    for r in &routes {
-        if !paths.contains(&r.path) {
-            paths.push(r.path.clone());
-        }
-    }
-    let mut route_calls = Vec::new();
-    for path in &paths {
-        let mut method_router: Option<TokenStream2> = None;
-        for r in routes.iter().filter(|r| &r.path == path) {
-            let verb = &r.method;
-            let handler = &r.handler;
-            method_router = Some(match method_router {
-                None => quote! { ::eaglet::axum::routing::#verb(#handler) },
-                Some(mr) => quote! { #mr.#verb(#handler) },
-            });
-        }
-        route_calls.push(quote! { .route(#path, #method_router) });
-    }
-    Ok(quote! {
-        #item
-
-        impl ::eaglet::Controller for #self_ty {
-            fn router(container: &::eaglet::Container) -> ::core::result::Result<::eaglet::axum::Router, ::eaglet::StartupError> {
-                let this = container.get::<Self>()?;
-                ::core::result::Result::Ok(::eaglet::axum::Router::new() #(#route_calls)*)
-            }
-        }
-    })
 }
 
 fn outside_controller(verb: &str) -> TokenStream {
     syn::Error::new(
         proc_macro2::Span::call_site(),
-        format!("#[{verb}] only works on a method inside an `impl` block marked #[controller(\"/prefix\")]"),
+        format!("#[{verb}] only works inside an `impl` block marked #[controller(\"/prefix\")]; put it below #[controller]"),
     )
     .to_compile_error()
     .into()
@@ -414,9 +282,21 @@ pub fn delete(_attr: TokenStream, _item: TokenStream) -> TokenStream {
     outside_controller("delete")
 }
 
+/// Guards for a controller or a route: `#[guard(AuthGuard)]`, below `#[controller]`.
+#[proc_macro_attribute]
+pub fn guard(_attr: TokenStream, _item: TokenStream) -> TokenStream {
+    outside_controller("guard")
+}
+
+/// A Tower layer for a controller or a route: `#[layer(TimeoutLayer::new(..))]`, below `#[controller]`.
+#[proc_macro_attribute]
+pub fn layer(_attr: TokenStream, _item: TokenStream) -> TokenStream {
+    outside_controller("layer")
+}
+
 #[cfg(test)]
 mod tests {
-    use super::route_path;
+    use super::controller::route_path;
 
     #[test]
     fn nest_style_paths_become_axum_paths() {

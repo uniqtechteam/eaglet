@@ -101,6 +101,7 @@ impl AppBuilder {
         for build_routes in resolved.routers {
             router = router.merge(build_routes(&container)?);
         }
+        let router = router.layer(axum::middleware::from_fn(crate::context::request_context));
         Ok(App {
             container: Arc::new(container),
             router,
