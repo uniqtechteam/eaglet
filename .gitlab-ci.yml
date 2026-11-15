@@ -46,8 +46,11 @@ lumen-projects:
     - if: $LUMEN_REF
   variables:
     EAGLET_GENERATED_TARGET: $CI_PROJECT_DIR/target/generated
-    EAGLET_TEST_LUMEN_DIR: $CI_PROJECT_DIR/../lumen
+    # Outside every checkout: the runner shares /builds (../lumen is lumen's own build directory),
+    # and a clone inside this checkout makes Cargo read eaglet's workspace for lumen's crates.
+    EAGLET_TEST_LUMEN_DIR: /tmp/lumen-src
   script:
+    - rm -rf "$EAGLET_TEST_LUMEN_DIR"
     - git clone --depth 1 --branch "$LUMEN_REF" "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/uniqtechteam/lumen.git" "$EAGLET_TEST_LUMEN_DIR"
     - cargo test -p eaglet-cli --test generated -- --ignored lumen --test-threads 2
 
