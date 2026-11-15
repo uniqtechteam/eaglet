@@ -31,4 +31,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   message. Each request gets a trace id (or keeps a sane incoming `x-request-id`), returned in the
   `x-request-id` header and available from `eaglet::trace_id()`.
 - `#[layer(...)]` adds Tower layers to a controller or a route.
+- `eaglet::testing` (the `testing` feature): `TestApp::new::<AppModule>()` builds the real module tree,
+  `.override_provider::<dyn UsersRepo>(Arc::new(Fake))` or `.override_value(fake)` swaps providers (a
+  wrong type does not compile), and `app.get("/users/1").send().await` runs requests in memory with
+  `status()`, `header()`, `text()` and `json::<T>()` on the response.
 

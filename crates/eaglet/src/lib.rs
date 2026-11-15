@@ -29,6 +29,8 @@ mod error;
 mod guard;
 mod http_error;
 mod module;
+#[cfg(feature = "testing")]
+pub mod testing;
 #[cfg(feature = "validate")]
 mod valid;
 

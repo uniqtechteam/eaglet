@@ -220,6 +220,7 @@ name = "eaglet"
 version = "0.1.0-dev"
 dependencies = [
  "axum",
+ "eaglet",
  "eaglet-macros",
  "futures",
  "http-body-util",

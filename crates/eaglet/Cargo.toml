@@ -20,13 +20,19 @@ tracing.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 validator = { workspace = true, optional = true }
+tower = { workspace = true, optional = true }
+http-body-util = { workspace = true, optional = true }
 
 [features]
 default = ["validate"]
 ## `Valid<Json<T>>` and `Valid<Query<T>>`, checked with the `validator` crate.
 validate = ["dep:validator"]
+## `eaglet::testing`: `TestApp`, provider overrides and an in-memory client. Turn it on in
+## `[dev-dependencies]`.
+testing = ["dep:tower", "dep:http-body-util"]
 
 [dev-dependencies]
+eaglet = { path = ".", features = ["testing"] }
 trybuild.workspace = true
 validator = { workspace = true, features = ["derive"] }
 tower.workspace = true

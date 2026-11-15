@@ -1,0 +1,12 @@
+error[E0277]: the trait bound `u32: UsersRepo` is not satisfied
+  --> tests/ui/override_wrong_type.rs:10:76
+   |
+10 |     let _ = TestApp::new::<AppModule>().override_provider::<dyn UsersRepo>(Arc::new(42_u32));
+   |                                                                            ^^^^^^^^^^^^^^^^ the trait `UsersRepo` is not implemented for `u32`
+   |
+help: this trait has no implementations, consider adding one
+  --> tests/ui/override_wrong_type.rs:4:1
+   |
+ 4 | trait UsersRepo: Send + Sync {}
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: required for the cast from `std::sync::Arc<u32>` to `std::sync::Arc<dyn UsersRepo>`

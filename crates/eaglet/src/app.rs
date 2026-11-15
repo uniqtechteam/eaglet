@@ -47,6 +47,12 @@ impl App {
         self.container.get::<T>()
     }
 
+    /// A copy of the router, for the in-memory test client.
+    #[cfg(feature = "testing")]
+    pub(crate) fn router(&self) -> axum::Router {
+        self.router.clone()
+    }
+
     /// The Axum router, to serve it yourself or nest it into another router.
     pub fn into_router(self) -> axum::Router {
         self.router
