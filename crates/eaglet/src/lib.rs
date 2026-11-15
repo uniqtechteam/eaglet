@@ -29,9 +29,9 @@ mod module;
 
 pub use app::{App, AppBuilder};
 pub use container::{Container, Dep, Injectable, ProviderDef, short_type_name};
-pub use eaglet_macros::{injectable, module};
+pub use eaglet_macros::{controller, delete, get, injectable, module, patch, post, put};
 pub use error::StartupError;
-pub use module::{Module, ModuleDef};
+pub use module::{Controller, ControllerDef, Module, ModuleDef, RouterFn};
 
 /// Axum, re-exported so apps and generated code use the same version.
 pub use axum;
@@ -51,6 +51,11 @@ macro_rules! provide {
 
 /// Everything an app usually needs: `use eaglet::prelude::*;`.
 pub mod prelude {
-    pub use crate::{App, ProviderDef, StartupError, injectable, module, provide};
+    pub use crate::{
+        App, ProviderDef, StartupError, controller, delete, get, injectable, module, patch, post,
+        provide, put,
+    };
+    pub use axum::Json;
+    pub use axum::extract::{Path, Query};
     pub use std::sync::Arc;
 }

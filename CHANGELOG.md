@@ -17,4 +17,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   path, duplicates and bad exports are reported.
 - `App::new::<AppModule>()`, `App::builder().override_provider(...)`, `app.provider::<T>()`,
   `app.listen(addr)`.
+- Controllers: `#[controller("/users")]` on an `impl` block, with `#[get]`, `#[post]`, `#[put]`, `#[patch]`
+  and `#[delete]` methods that take `&self` and any Axum extractors. Paths use `/:id` and `/*rest`.
+  A controller is an `#[injectable]` struct listed in `#[module(controllers = [...])]`, and its
+  dependencies get the same startup checks as providers.
 

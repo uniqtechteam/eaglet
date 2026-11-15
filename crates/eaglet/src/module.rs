@@ -3,7 +3,7 @@
 use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
 
-use crate::{Dep, ProviderDef, StartupError};
+use crate::{Container, Dep, Injectable, ProviderDef, StartupError};
 
 /// A module: what it imports, provides and exports. Implemented by `#[module]`.
 pub trait Module: 'static {
@@ -24,6 +24,63 @@ pub struct ModuleDef {
     pub providers: Vec<ProviderDef>,
     /// Providers that importing modules may use.
     pub exports: Vec<Dep>,
+    /// Controllers whose routes this module serves.
+    pub controllers: Vec<ControllerDef>,
+}
+
+/// An `#[injectable]` struct with routes. Implemented by `#[controller]` on its `impl` block.
+pub trait Controller: Injectable {
+    /// The routes, with handlers bound to the built controller.
+    ///
+    /// # Errors
+    /// When the controller or something its routes need was not built.
+    fn router(container: &Container) -> Result<axum::Router, StartupError>;
+
+    /// Providers the routes need besides the controller's own fields (for example guards).
+    #[must_use]
+    fn route_deps() -> Vec<Dep> {
+        Vec::new()
+    }
+}
+
+/// Builds one controller's routes from the built providers.
+pub type RouterFn = fn(&Container) -> Result<axum::Router, StartupError>;
+
+/// A controller as declared in `#[module(controllers = [...])]`.
+#[derive(Clone)]
+pub struct ControllerDef {
+    /// The controller itself, built like any provider.
+    pub provider: ProviderDef,
+    /// What its routes need besides its fields.
+    pub route_deps: Vec<Dep>,
+    /// Builds its routes.
+    pub router: RouterFn,
+}
+
+impl ControllerDef {
+    /// The definition of controller `C`.
+    #[must_use]
+    pub fn of<C: Controller>() -> Self {
+        Self {
+            provider: ProviderDef::of::<C>(),
+            route_deps: C::route_deps(),
+            router: C::router,
+        }
+    }
+}
+
+impl std::fmt::Debug for ControllerDef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ControllerDef")
+            .field("controller", &self.provider.key.short_name())
+            .finish_non_exhaustive()
+    }
+}
+
+/// The checked module tree: providers in build order and the routers to build afterwards.
+pub(crate) struct Resolved {
+    pub providers: Vec<ProviderDef>,
+    pub routers: Vec<RouterFn>,
 }
 
 /// Every module reachable from the root, root first, each once.
@@ -89,7 +146,7 @@ impl Graph {
 pub(crate) fn resolve(
     root: fn() -> ModuleDef,
     overrides: &HashMap<TypeId, ProviderDef>,
-) -> Result<Vec<ProviderDef>, StartupError> {
+) -> Result<Resolved, StartupError> {
     let modules = collect(root);
     let by_id = modules.iter().enumerate().map(|(i, m)| (m.id, i)).collect();
     let graph = Graph { modules, by_id };
@@ -108,14 +165,35 @@ pub(crate) fn resolve(
             }
             all.push(p.clone());
         }
+        for c in &module.controllers {
+            let p = &c.provider;
+            if let Some(first) = owner.insert(p.key.id, module.name) {
+                return Err(StartupError::Duplicate {
+                    provider: p.key.short_name(),
+                    first: first.to_owned(),
+                    second: module.name.to_owned(),
+                });
+            }
+            all.push(p.clone());
+        }
     }
 
     // every dependency is visible where the provider is declared
     let mut memo = HashMap::new();
     for (i, module) in graph.modules.iter().enumerate() {
         let visible = graph.visible(i, &mut memo, &mut HashSet::new())?;
-        for p in &module.providers {
-            if let Some(missing) = p.deps.iter().find(|d| !visible.contains(&d.id)) {
+        let controllers = module
+            .controllers
+            .iter()
+            .map(|c| (&c.provider, c.route_deps.as_slice()));
+        let providers = module.providers.iter().map(|p| (p, &[][..]));
+        for (p, extra) in providers.chain(controllers) {
+            if let Some(missing) = p
+                .deps
+                .iter()
+                .chain(extra)
+                .find(|d| !visible.contains(&d.id))
+            {
                 return Err(StartupError::MissingProvider {
                     provider: p.key.short_name(),
                     needs: missing.short_name(),
@@ -124,12 +202,20 @@ pub(crate) fn resolve(
             }
         }
     }
+    let routers = graph
+        .modules
+        .iter()
+        .flat_map(|m| m.controllers.iter().map(|c| c.router))
+        .collect();
 
     let all: Vec<ProviderDef> = all
         .into_iter()
         .map(|p| overrides.get(&p.key.id).cloned().unwrap_or(p))
         .collect();
-    order(&all)
+    Ok(Resolved {
+        providers: order(&all)?,
+        routers,
+    })
 }
 
 /// Dependencies before dependents; a circle is an error that shows the whole circle.

@@ -1,0 +1,7 @@
+error: #[get] only works on a method inside an `impl` block marked #[controller("/prefix")]
+ --> tests/ui/route_outside_controller.rs:3:1
+  |
+3 | #[get("/")]
+  | ^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `get` (in Nightly builds, run with -Z macro-backtrace for more info)

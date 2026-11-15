@@ -1,4 +1,4 @@
-error: unknown key `services`; expected imports, providers or exports
+error: unknown key `services`; expected imports, controllers, providers or exports
  --> tests/ui/unknown_module_key.rs:3:10
   |
 3 | #[module(services = [])]

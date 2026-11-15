@@ -91,15 +91,19 @@ impl AppBuilder {
     /// # Errors
     /// A [`StartupError`] that names the provider and module at fault.
     pub async fn build(self) -> Result<App, StartupError> {
-        let order = resolve(self.root, &self.overrides)?;
+        let resolved = resolve(self.root, &self.overrides)?;
         let mut container = Container::default();
-        for provider in order {
+        for provider in resolved.providers {
             let built = (provider.build)(&container).await?;
             container.insert(provider.key.id, built);
         }
+        let mut router = axum::Router::new();
+        for build_routes in resolved.routers {
+            router = router.merge(build_routes(&container)?);
+        }
         Ok(App {
             container: Arc::new(container),
-            router: axum::Router::new(),
+            router,
         })
     }
 }
