@@ -135,7 +135,7 @@ fn run(cli: Cli) -> Result<(), String> {
                     _ => "",
                 };
                 if !first.is_empty() {
-                    println!("\nlumen writes the database client: cargo install lumen-cli");
+                    println!("\nlumen writes the database client: cargo install lumen-db-cli");
                 }
                 println!(
                     "\nNext: cd {name} && {first}cargo run   (API docs at http://localhost:3000/docs)"

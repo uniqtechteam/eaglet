@@ -76,8 +76,6 @@ fn generated_with(db: &str, lumen: Option<&Path>) {
                 "-q",
                 "--manifest-path",
                 &manifest,
-                "-p",
-                "lumen-cli",
                 "--bin",
                 "lumen",
                 "--",
