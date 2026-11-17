@@ -3,19 +3,19 @@ resolver = "3"
 members = ["crates/eaglet", "crates/eaglet-macros", "crates/eaglet-cli", "examples/shop", "bench"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/uniqtechteam/eaglet"
 authors = ["UniqTech <https://uniqtech.dev>"]
 readme = "README.md"
-keywords = ["web", "framework", "axum", "nestjs", "dependency-injection"]
+keywords = ["web", "framework", "axum", "http", "dependency-injection"]
 categories = ["web-programming::http-server"]
 
 [workspace.dependencies]
-eaglet = { path = "crates/eaglet", version = "0.1.0" }
-eaglet-macros = { path = "crates/eaglet-macros", version = "0.1.0" }
+eaglet = { path = "crates/eaglet", version = "0.1.1" }
+eaglet-macros = { path = "crates/eaglet-macros", version = "0.1.1" }
 clap = { version = "4.5", features = ["derive"] }
 proc-macro2 = "1"
 quote = "1"

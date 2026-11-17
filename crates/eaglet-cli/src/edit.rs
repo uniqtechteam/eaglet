@@ -216,9 +216,9 @@ mod tests {
             out.contains("#[module(controllers = [C], providers = [S])]"),
             "{out}"
         );
-        let nested =
+        let inner =
             "#[module(providers = [ProviderDef::value(Config { a: [1] })], exports = [Config])]";
-        let out = add_to_module_list(nested, "providers", "Other").unwrap_or_default();
+        let out = add_to_module_list(inner, "providers", "Other").unwrap_or_default();
         assert!(out.contains("Config { a: [1] }), Other], exports"), "{out}");
     }
 

@@ -300,7 +300,7 @@ mod tests {
     use super::controller::route_path;
 
     #[test]
-    fn nest_style_paths_become_axum_paths() {
+    fn colon_paths_become_axum_paths() {
         assert_eq!(route_path("/users", "/:id"), "/users/{id}");
         assert_eq!(route_path("/users", "/"), "/users");
         assert_eq!(route_path("/", "/"), "/");

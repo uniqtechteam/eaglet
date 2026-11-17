@@ -10,7 +10,7 @@ use axum::routing::MethodRouter;
 
 use crate::HttpError;
 
-/// A check that decides whether a request may reach the handler, like `NestJS`' `CanActivate`.
+/// A check that decides whether a request may reach the handler.
 /// A guard is a provider: make it `#[injectable]`, list it in a module, and put
 /// `#[guard(AuthGuard)]` on a controller (all its routes) or on one route. It runs before the body
 /// is read, and may add values to `parts.extensions` for the handler (for example the signed-in
