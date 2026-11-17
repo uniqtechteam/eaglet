@@ -11,17 +11,21 @@ publish = false
 name = "bench-server"
 path = "src/main.rs"
 
+[[bin]]
+name = "bench-inproc"
+path = "src/inproc.rs"
+
 [dependencies]
 eaglet.workspace = true
 axum.workspace = true
 serde.workspace = true
 tokio.workspace = true
+tower.workspace = true
 validator = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 http-body-util.workspace = true
 serde_json.workspace = true
-tower.workspace = true
 
 [lints]
 workspace = true
