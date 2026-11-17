@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/uniqtechteam/eaglet"
 authors = ["UniqTech <https://uniqtech.dev>"]
 readme = "README.md"
-keywords = ["web", "framework", "axum", "nestjs", "dependency-injection"]
+keywords = ["web", "framework", "axum", "http", "dependency-injection"]
 categories = ["web-programming::http-server"]
 
 [workspace.dependencies]

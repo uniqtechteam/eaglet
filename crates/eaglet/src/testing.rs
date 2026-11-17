@@ -1,5 +1,5 @@
-//! Testing, like `NestJS`' `Test.createTestingModule()`: build the real module tree, swap providers for
-//! fakes, and call routes in memory, with no TCP port and no network.
+//! Testing: build the real module tree, swap providers for fakes, and call routes in memory, with
+//! no TCP port and no network.
 //!
 //! ```ignore
 //! let app = TestApp::new::<AppModule>()
@@ -49,7 +49,7 @@ impl TestApp {
     #[must_use]
     #[allow(
         clippy::new_ret_no_self,
-        reason = "reads like NestJS' Test.createTestingModule(): new, override, build"
+        reason = "a builder that reads in order: new, override, build"
     )]
     pub fn new<M: Module>() -> TestAppBuilder {
         TestAppBuilder {

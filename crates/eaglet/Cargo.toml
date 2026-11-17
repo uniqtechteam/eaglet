@@ -1,6 +1,6 @@
 [package]
 name = "eaglet"
-description = "The NestJS structure for Rust web apps: modules, providers, controllers and guards on top of Axum."
+description = "A structure for Rust web apps on Axum: modules, dependency injection, controllers, guards and validation, checked at startup."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

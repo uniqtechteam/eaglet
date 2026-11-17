@@ -1,4 +1,4 @@
-//! The eaglet command line: `eaglet new` and `eaglet g`, like the Nest CLI.
+//! The eaglet command line: `eaglet new` creates a project and `eaglet g` adds parts to it.
 
 pub mod edit;
 pub mod names;

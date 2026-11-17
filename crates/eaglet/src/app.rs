@@ -74,8 +74,8 @@ impl App {
         crate::openapi::document(&self.title, &self.version, &self.docs)
     }
 
-    /// Serve Swagger UI at `path` and the OpenAPI document at `{path}/openapi.json`, like
-    /// `SwaggerModule.setup('docs', app, document)` in `NestJS`: `.swagger("/docs")`.
+    /// Serve Swagger UI at `path` and the OpenAPI document at `{path}/openapi.json`, for example
+    /// `.swagger("/docs")`.
     #[cfg(feature = "swagger")]
     #[must_use]
     pub fn swagger(mut self, path: &str) -> Self {
@@ -124,7 +124,7 @@ impl App {
         self.finish()
     }
 
-    /// The Axum router, to serve it yourself or nest it into another router.
+    /// The Axum router, to serve it yourself or mount it inside another router.
     pub fn into_router(self) -> axum::Router {
         self.finish()
     }
