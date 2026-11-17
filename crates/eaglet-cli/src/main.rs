@@ -89,6 +89,15 @@ fn finish(plan: &Plan, dry_run: bool) -> Result<(), String> {
     Ok(())
 }
 
+/// On Windows `canonicalize` returns `\\?\C:\...`; the generated `Cargo.toml` gets the plain
+/// `C:\...` form, which reads better and which every tool in the build understands.
+fn plain_path(path: &str) -> String {
+    match path.strip_prefix(r"\\?\") {
+        Some(rest) if !rest.starts_with(r"UNC\") => rest.to_owned(),
+        _ => path.to_owned(),
+    }
+}
+
 /// A `--*-path` flag as a dependency source.
 fn local(path: Option<PathBuf>, flag: &str) -> Result<Source, String> {
     match path {
@@ -96,7 +105,7 @@ fn local(path: Option<PathBuf>, flag: &str) -> Result<Source, String> {
             let p = p
                 .canonicalize()
                 .map_err(|e| format!("{flag} {}: {e}", p.display()))?;
-            Ok(Source::Path(p.display().to_string()))
+            Ok(Source::Path(plain_path(&p.display().to_string())))
         }
         None => Ok(Source::Registry),
     }
@@ -167,5 +176,17 @@ fn main() -> ExitCode {
             eprintln!("error: {e}");
             ExitCode::FAILURE
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::plain_path;
+
+    #[test]
+    fn windows_verbatim_paths_lose_their_prefix() {
+        assert_eq!(plain_path(r"\\?\C:\work\eaglet"), r"C:\work\eaglet");
+        assert_eq!(plain_path(r"\\?\UNC\server\share"), r"\\?\UNC\server\share");
+        assert_eq!(plain_path("/home/me/eaglet"), "/home/me/eaglet");
     }
 }
