@@ -93,7 +93,7 @@ impl App {
         if let Some(path) = &self.swagger {
             router = router.merge(self.docs_routes(path));
         }
-        router.layer(axum::middleware::from_fn(crate::context::request_context))
+        router.layer(crate::context::RequestContextLayer)
     }
 
     #[cfg(feature = "swagger")]
