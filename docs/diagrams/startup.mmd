@@ -1,0 +1,10 @@
+flowchart TD
+    New(["App::new::&lt;AppModule&gt;()"]) --> Collect["collect<br/>every module reachable through imports"]
+    Collect --> Check{"resolve<br/>duplicates, exports,<br/>every dependency visible?"}
+    Check -- no --> Err(["StartupError<br/>names the provider and the module"])
+    Check -- yes --> Order{"order<br/>dependencies first,<br/>no circles?"}
+    Order -- circle --> Err
+    Order -- yes --> Build["build providers once<br/>values, factories,<br/>#[injectable] structs"]
+    Build -- "a factory fails" --> Err
+    Build --> Routes["Controller::router<br/>for every controller"]
+    Routes --> App(["App<br/>.swagger(..) / .listen(..) / TestApp"])
