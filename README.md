@@ -4,7 +4,7 @@ eaglet gives Rust web apps the structure NestJS developers know: modules, depend
 controllers, guards, validation, one error format, testing modules and a generator CLI. Underneath
 it is a plain `axum::Router`, so every Axum extractor and Tower middleware keeps working.
 
-**Status:** 0.1 in development, not on crates.io yet.
+**Status:** 0.1. Needs Rust 1.88 or newer.
 
 ```console
 $ eaglet new shop --db sqlite
@@ -47,12 +47,12 @@ eaglet is that layout with the wiring done for you, and checked when the app sta
 ## Install
 
 ```bash
-cargo install --path crates/eaglet-cli    # from a checkout of this repo, until 0.1 is on crates.io
+cargo install eaglet-cli
 ```
 
-The CLI is called `eaglet`. Projects it creates depend on `eaglet` from crates.io; until the first
-release, point them at your checkout with `eaglet new shop --eaglet-path ../eaglet/crates/eaglet`.
-Needs Rust 1.88 or newer.
+The CLI is called `eaglet`. Projects it creates depend on `eaglet` from crates.io. To work against a
+checkout instead, use `eaglet new shop --eaglet-path ../eaglet/crates/eaglet`. Release binaries for
+Linux, macOS and Windows are attached to each GitHub release.
 
 ## From NestJS in half an hour
 
@@ -440,8 +440,8 @@ pub fn http(e: lumen_orm::Error) -> HttpError {
 ```
 
 A missing record becomes a 404, a duplicate a 409, and anything unexpected a 500 that logs the cause
-and tells the client nothing. lumen is not on crates.io yet either, so these projects need
-`--lumen-path` pointing at a lumen checkout.
+and tells the client nothing. They take `lumen-orm` from crates.io;
+`--lumen-path` points them at a lumen checkout instead.
 
 ## Performance
 

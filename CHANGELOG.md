@@ -6,10 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-Needs Rust 1.88 or newer.
+## [0.1.0] - 2026-11-17
+
+The first release. Needs Rust 1.88 or newer.
 
 ### Added
 
+- Releases come from a `v*` tag: `eaglet` binaries for Linux (x86_64, aarch64), macOS (aarch64, x86_64)
+  and Windows (x86_64) with SHA256SUMS on the GitHub release, and `eaglet-macros`, `eaglet` and
+  `eaglet-cli` on crates.io.
+- `bench/`: the same routes in plain Axum and in eaglet, measured in memory and over HTTP, with the
+  raw numbers and the chart in the README.
 - Project setup: the `eaglet` runtime, the `eaglet-macros` crate and the `eaglet` command line tool.
 - Modules and providers: `#[module(imports, providers, exports)]`, `#[injectable]` structs whose `Arc<…>`
   fields are other providers, `provide!(dyn Trait => Type)`, ready values and async factories.
@@ -65,3 +72,14 @@ Needs Rust 1.88 or newer.
   `docs/guide.md` covers modules and providers, controllers, guards, validation, errors, layers,
   testing, the API docs and the command line. Every Rust block in both is copied from code the
   workspace builds and tests, and `crates/eaglet/tests/docs.rs` fails when one drifts.
+
+### Fixed
+
+- `eaglet new --eaglet-path/--lumen-path` on Windows writes a plain `C:\...` path into Cargo.toml
+  instead of `\\?\C:\...`.
+- The `eaglet` crate no longer depends on `futures`.
+- The request layer costs 150 to 190 ns over plain Axum instead of about 500 ns: it is a plain tower
+  service now, makes the request id only when something reads it, and reads the body only on errors.
+
+[Unreleased]: https://github.com/uniqtechteam/eaglet/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/uniqtechteam/eaglet/releases/tag/v0.1.0
