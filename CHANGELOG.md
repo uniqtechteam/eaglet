@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-17
+
+### Changed
+
+- Documentation: the README introduces eaglet on its own, with a walkthrough of the shop example,
+  a comparison with plain Axum and the overhead measured against it. Comparisons with other
+  frameworks moved to their own guides in `docs/`. The crate description, the API docs and the
+  `AGENTS.md` that `eaglet new` writes were reworded to match. No changes to the API or behaviour.
+
 ## [0.1.0] - 2026-11-17
 
 The first release. Needs Rust 1.88 or newer.
@@ -88,5 +97,6 @@ The first release. Needs Rust 1.88 or newer.
 - The request layer costs 150 to 190 ns over plain Axum instead of about 500 ns: it is a plain tower
   service now, makes the request id only when something reads it, and reads the body only on errors.
 
-[Unreleased]: https://github.com/uniqtechteam/eaglet/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/uniqtechteam/eaglet/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/uniqtechteam/eaglet/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/uniqtechteam/eaglet/releases/tag/v0.1.0
