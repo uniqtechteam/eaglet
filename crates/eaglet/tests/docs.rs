@@ -1,5 +1,6 @@
-//! Every Rust block in `README.md` and `docs/*.md` is copied from code that this workspace builds
-//! and tests, so the docs cannot drift from the code without this test failing.
+//! Every Rust block in `README.md` and `docs/*.md` (the guide and the guide for coding agents) is
+//! copied from code that this workspace builds and tests, so the docs cannot drift from the code
+//! without this test failing.
 //!
 //! A block matches when its lines, with indentation and blank lines ignored, appear in that order
 //! and next to each other in one of the source files. A line `// ...` in a block skips code: the
@@ -25,6 +26,9 @@ const SOURCES: &[&str] = &[
 
 /// The documents whose Rust blocks are checked.
 const DOCS: &[&str] = &["README.md", "docs"];
+
+/// Documents that must be found under `DOCS`, each with Rust blocks to check.
+const MUST_CHECK: &[&str] = &["README.md", "docs/guide.md", "docs/llm-guide.md"];
 
 /// The workspace root, or `None` when the crate is built from its crates.io package, which has
 /// neither the docs nor the example to check them against.
@@ -119,6 +123,18 @@ fn every_rust_block_in_the_docs_is_real_code() {
     }
     let mut checked = 0;
     let mut missing = Vec::new();
+    for doc in MUST_CHECK {
+        let path = root.join(doc);
+        assert!(
+            docs.contains(&path),
+            "{doc} is not among the checked documents"
+        );
+        let text = fs::read_to_string(&path).unwrap();
+        assert!(
+            !blocks(&text, "rust").is_empty(),
+            "{doc} has no Rust blocks to check"
+        );
+    }
     for doc in &docs {
         let text = fs::read_to_string(doc).unwrap();
         for (line, block) in blocks(&text, "rust") {
