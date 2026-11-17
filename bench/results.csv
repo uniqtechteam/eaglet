@@ -1,0 +1,4 @@
+case,axum_rps,axum_p50_us,axum_p99_us,axum_inproc_ns,eaglet_rps,eaglet_p50_us,eaglet_p99_us,eaglet_inproc_ns,eaglet_vs_axum_rps,eaglet_extra_ns
+GET /users/:id,478376,126.3,343.8,634,424099,145.2,345.5,1135,-0.1135,501
+POST /users (validated),384163,158.8,338.1,1581,344209,176.1,382.1,2134,-0.104,553
+GET /me (guarded),439128,137.6,347.6,996,399281,156.1,315.2,1474,-0.0907,478

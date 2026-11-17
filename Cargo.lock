@@ -451,6 +451,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "eaglet-bench"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "eaglet",
+ "http-body-util",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower",
+ "validator",
+]
+
+[[package]]
 name = "eaglet-cli"
 version = "0.1.0-dev"
 dependencies = [

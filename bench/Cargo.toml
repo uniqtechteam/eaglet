@@ -1,0 +1,31 @@
+[package]
+name = "eaglet-bench"
+description = "The same three endpoints in plain Axum and in eaglet, to measure what eaglet adds per request."
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "bench-server"
+path = "src/main.rs"
+
+[[bin]]
+name = "bench-inproc"
+path = "src/inproc.rs"
+
+[dependencies]
+eaglet.workspace = true
+axum.workspace = true
+serde.workspace = true
+tokio.workspace = true
+tower.workspace = true
+validator = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+http-body-util.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true
