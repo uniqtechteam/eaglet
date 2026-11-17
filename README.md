@@ -491,16 +491,34 @@ and tells the client nothing. They take `lumen-orm` from crates.io;
 
 ## Performance
 
-eaglet costs about 150 to 190 ns per request over the same routes in plain Axum: 792 ns against
-604 ns for a JSON `GET` called in memory. Guards and validation cost what the hand-written Axum
-versions cost; the difference is the request layer that adds trace ids and the error envelope,
-and most of it is what any `Router::layer` costs in Axum. Over HTTP the gap is smaller than the
-noise between rounds on the machine we measured on.
+The same three routes (a JSON `GET`, a validated `POST`, a guarded `GET`) in plain Axum, in eaglet
+and in a NestJS 11 app, loaded with `oha` at 64 connections. The table is the JSON `GET` with the
+server held to four CPUs: four Tokio worker threads for Rust, `node:cluster` with four workers for
+Node. Memory is the whole server, every process of the cluster included.
 
-![Requests per second and cost per request, plain Axum against eaglet](docs/img/bench-axum.svg)
+| `GET /users/:id`, 4 CPUs | Requests/s | p99 | Memory at rest / under load |
+|---|---|---|---|
+| plain Axum | 501,367 | 240 µs | 3.4 / 5.9 MB |
+| eaglet | 467,635 | 322 µs | 3.5 / 6.0 MB |
+| NestJS + Express | 28,290 | 6,815 µs | 413 / 756 MB |
+| NestJS + Fastify | 159,834 | 788 µs | 422 / 511 MB |
 
-Measured with `python3 bench/run.py` on an Intel i7-12700 under Linux, 2026-11-17. The method, the
-raw numbers and the caveats are in [bench/README.md](bench/README.md).
+On one CPU (one worker thread against one Node process) the picture is the same: eaglet answered
+2.6 to 2.9 times as many requests as NestJS on Fastify on the `GET` routes and 4.1 to 4.7 times on
+the validated `POST`. The routes do almost nothing, so these are the frameworks' own costs; a
+handler that waits on a database narrows every gap.
+
+![Requests per second for plain Axum, eaglet, NestJS with Express and NestJS with Fastify](docs/img/bench-frameworks.svg)
+
+Against plain Axum, eaglet costs about 150 to 200 ns per request: 773 ns against 601 ns for the
+JSON `GET` called in memory. Guards and validation cost what the hand-written Axum versions cost;
+the difference is the request layer that adds trace ids and the error envelope, and most of it is
+what any `Router::layer` costs in Axum. Over HTTP that gap is smaller than the noise between
+rounds on the machine we measured on.
+
+Measured with `python3 bench/run.py` on an Intel i7-12700 under Linux, 2026-11-17, medians of five
+rounds on a machine shared with other work. The method, every route in both setups, the versions,
+the raw numbers and the caveats are in [bench/README.md](bench/README.md).
 
 ## Limits
 

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="719" viewBox="0 0 680 719" font-family="system-ui, sans-serif" font-size="13" role="img" aria-label="Requests per second for plain Axum, eaglet, NestJS with Express and NestJS with Fastify, on one CPU and on four">
+<style>text{fill:#52514e}.v{fill:#0b0b0b}.axum{fill:#2a78d6}.eaglet{fill:#eb6834}.nest-express{fill:#1baf7a}.nest-fastify{fill:#eda100}@media (prefers-color-scheme: dark){text{fill:#c3c2b7}.v{fill:#f0efec}.axum{fill:#3987e5}.eaglet{fill:#d95926}.nest-express{fill:#199e70}.nest-fastify{fill:#c98500}}</style>
+<text x="0" y="18" class="v" font-size="15" font-weight="600">Requests per second in four frameworks (higher is better)</text>
+<rect class="axum" x="0" y="33" width="12" height="12" rx="2"/><text x="18" y="44">plain Axum</text>
+<rect class="eaglet" x="122" y="33" width="12" height="12" rx="2"/><text x="140" y="44">eaglet</text>
+<rect class="nest-express" x="212" y="33" width="12" height="12" rx="2"/><text x="230" y="44">NestJS + Express</text>
+<rect class="nest-fastify" x="382" y="33" width="12" height="12" rx="2"/><text x="400" y="44">NestJS + Fastify</text>
+<text x="0" y="78" class="v" font-weight="600">Server on 1 CPU (CPUs 0): one Tokio worker thread, one Node process</text>
+<text x="0" y="132" class="v">GET /users/:id</text>
+<rect class="axum" x="190" y="92" width="163.7" height="16" rx="4"><title>plain Axum, GET /users/:id, 1 CPU: 216,008 req/s, p99 354 µs</title></rect><text x="359.7" y="105" class="v">216,008</text>
+<rect class="eaglet" x="190" y="110" width="155.1" height="16" rx="4"><title>eaglet, GET /users/:id, 1 CPU: 204,634 req/s, p99 444 µs</title></rect><text x="351.1" y="123" class="v">204,634</text>
+<rect class="nest-express" x="190" y="128" width="11.5" height="16" rx="4"><title>NestJS + Express, GET /users/:id, 1 CPU: 15,115 req/s, p99 13,212 µs</title></rect><text x="207.5" y="141" class="v">15,115</text>
+<rect class="nest-fastify" x="190" y="146" width="53.9" height="16" rx="4"><title>NestJS + Fastify, GET /users/:id, 1 CPU: 71,076 req/s, p99 1,399 µs</title></rect><text x="249.9" y="159" class="v">71,076</text>
+<text x="0" y="222" class="v">POST /users (validated)</text>
+<rect class="axum" x="190" y="182" width="121.5" height="16" rx="4"><title>plain Axum, POST /users (validated), 1 CPU: 160,287 req/s, p99 742 µs</title></rect><text x="317.5" y="195" class="v">160,287</text>
+<rect class="eaglet" x="190" y="200" width="125.2" height="16" rx="4"><title>eaglet, POST /users (validated), 1 CPU: 165,219 req/s, p99 472 µs</title></rect><text x="321.2" y="213" class="v">165,219</text>
+<rect class="nest-express" x="190" y="218" width="7.8" height="16" rx="4"><title>NestJS + Express, POST /users (validated), 1 CPU: 10,250 req/s, p99 17,067 µs</title></rect><text x="203.8" y="231" class="v">10,250</text>
+<rect class="nest-fastify" x="190" y="236" width="30.8" height="16" rx="4"><title>NestJS + Fastify, POST /users (validated), 1 CPU: 40,630 req/s, p99 2,637 µs</title></rect><text x="226.8" y="249" class="v">40,630</text>
+<text x="0" y="312" class="v">GET /me (guarded)</text>
+<rect class="axum" x="190" y="272" width="151.0" height="16" rx="4"><title>plain Axum, GET /me (guarded), 1 CPU: 199,254 req/s, p99 385 µs</title></rect><text x="347.0" y="285" class="v">199,254</text>
+<rect class="eaglet" x="190" y="290" width="144.3" height="16" rx="4"><title>eaglet, GET /me (guarded), 1 CPU: 190,415 req/s, p99 502 µs</title></rect><text x="340.3" y="303" class="v">190,415</text>
+<rect class="nest-express" x="190" y="308" width="11.3" height="16" rx="4"><title>NestJS + Express, GET /me (guarded), 1 CPU: 14,940 req/s, p99 12,518 µs</title></rect><text x="207.3" y="321" class="v">14,940</text>
+<rect class="nest-fastify" x="190" y="326" width="54.5" height="16" rx="4"><title>NestJS + Fastify, GET /me (guarded), 1 CPU: 71,926 req/s, p99 1,569 µs</title></rect><text x="250.5" y="339" class="v">71,926</text>
+<text x="0" y="376" class="v" font-weight="600">Server on 4 CPUs (CPUs 0-3): 4 Tokio worker threads, node:cluster with 4 workers</text>
+<text x="0" y="430" class="v">GET /users/:id</text>
+<rect class="axum" x="190" y="390" width="380.0" height="16" rx="4"><title>plain Axum, GET /users/:id, 4 CPUs: 501,367 req/s, p99 240 µs</title></rect><text x="576.0" y="403" class="v">501,367</text>
+<rect class="eaglet" x="190" y="408" width="354.4" height="16" rx="4"><title>eaglet, GET /users/:id, 4 CPUs: 467,635 req/s, p99 322 µs</title></rect><text x="550.4" y="421" class="v">467,635</text>
+<rect class="nest-express" x="190" y="426" width="21.4" height="16" rx="4"><title>NestJS + Express, GET /users/:id, 4 CPUs: 28,290 req/s, p99 6,815 µs</title></rect><text x="217.4" y="439" class="v">28,290</text>
+<rect class="nest-fastify" x="190" y="444" width="121.1" height="16" rx="4"><title>NestJS + Fastify, GET /users/:id, 4 CPUs: 159,834 req/s, p99 788 µs</title></rect><text x="317.1" y="457" class="v">159,834</text>
+<text x="0" y="520" class="v">POST /users (validated)</text>
+<rect class="axum" x="190" y="480" width="293.5" height="16" rx="4"><title>plain Axum, POST /users (validated), 4 CPUs: 387,178 req/s, p99 338 µs</title></rect><text x="489.5" y="493" class="v">387,178</text>
+<rect class="eaglet" x="190" y="498" width="260.1" height="16" rx="4"><title>eaglet, POST /users (validated), 4 CPUs: 343,227 req/s, p99 563 µs</title></rect><text x="456.1" y="511" class="v">343,227</text>
+<rect class="nest-express" x="190" y="516" width="14.2" height="16" rx="4"><title>NestJS + Express, POST /users (validated), 4 CPUs: 18,751 req/s, p99 9,130 µs</title></rect><text x="210.2" y="529" class="v">18,751</text>
+<rect class="nest-fastify" x="190" y="534" width="55.5" height="16" rx="4"><title>NestJS + Fastify, POST /users (validated), 4 CPUs: 73,209 req/s, p99 1,485 µs</title></rect><text x="251.5" y="547" class="v">73,209</text>
+<text x="0" y="610" class="v">GET /me (guarded)</text>
+<rect class="axum" x="190" y="570" width="345.1" height="16" rx="4"><title>plain Axum, GET /me (guarded), 4 CPUs: 455,378 req/s, p99 325 µs</title></rect><text x="541.1" y="583" class="v">455,378</text>
+<rect class="eaglet" x="190" y="588" width="336.2" height="16" rx="4"><title>eaglet, GET /me (guarded), 4 CPUs: 443,575 req/s, p99 268 µs</title></rect><text x="532.2" y="601" class="v">443,575</text>
+<rect class="nest-express" x="190" y="606" width="21.5" height="16" rx="4"><title>NestJS + Express, GET /me (guarded), 4 CPUs: 28,373 req/s, p99 7,017 µs</title></rect><text x="217.5" y="619" class="v">28,373</text>
+<rect class="nest-fastify" x="190" y="624" width="128.6" height="16" rx="4"><title>NestJS + Fastify, GET /me (guarded), 4 CPUs: 169,703 req/s, p99 742 µs</title></rect><text x="324.6" y="637" class="v">169,703</text>
+<text x="0" y="674" font-size="11">12th Gen Intel(R) Core(TM) i7-12700, Linux 7.0.0-43-generic</text>
+<text x="0" y="689" font-size="11">rustc 1.100.0, Node v22.23.5, NestJS 11.2.10, Express 5.2.1, Fastify 5.12.8, oha 1.17.0</text>
+<text x="0" y="704" font-size="11">oha on CPUs 4-11, 64 connections, 10 s per run, median of 5 rounds, 2026-11-17</text>
+</svg>
