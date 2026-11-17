@@ -1,0 +1,178 @@
+name: Release
+
+# Push a tag like v0.1.0 (it must match the workspace version):
+#   1. the `eaglet` binary is built for five targets and smoke tested on Linux, macOS and Windows
+#      (eaglet new, eaglet g resource, then the generated app is built and tested);
+#   2. the archives and a SHA256SUMS file go up as a GitHub release, with notes from CHANGELOG.md;
+#   3. eaglet-macros, eaglet and eaglet-cli are published to crates.io, in that order.
+# Run it by hand from the Actions tab for a dry run: the same builds and smoke tests, the archives
+# kept as workflow artifacts, `cargo publish --dry-run` instead of an upload, and no release.
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  version:
+    name: check the version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: read
+        name: read the workspace version
+        run: |
+          version=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "eaglet") | .version')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "workspace version: $version"
+      - name: the tag matches it
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          VERSION: ${{ steps.read.outputs.version }}
+        run: |
+          if [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match the workspace version $VERSION"
+            exit 1
+          fi
+
+  build:
+    name: build (${{ matrix.target }})
+    needs: version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, smoke: true }
+          - { os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu, smoke: true }
+          - { os: macos-latest, target: aarch64-apple-darwin, smoke: true }
+          # macos-13 runners are retired: the Intel build cross-compiles on Apple silicon, so the
+          # macOS smoke test runs on the aarch64 binary only
+          - { os: macos-latest, target: x86_64-apple-darwin, smoke: false }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, smoke: true }
+    env:
+      ARCHIVE: eaglet-${{ needs.version.outputs.version }}-${{ matrix.target }}
+      EXE: ${{ startsWith(matrix.os, 'windows') && 'eaglet.exe' || 'eaglet' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: build
+        run: cargo build --release --locked -p eaglet-cli --target ${{ matrix.target }}
+
+      - name: smoke test (eaglet new, then build and test the app)
+        if: matrix.smoke
+        shell: bash
+        run: |
+          set -euxo pipefail
+          bin="$GITHUB_WORKSPACE/target/${{ matrix.target }}/release/$EXE"
+          "$bin" --version
+          # outside the checkout, so Cargo does not take the app for a member of this workspace;
+          # the app points at this checkout's eaglet, which is not on crates.io yet
+          cd "$RUNNER_TEMP"
+          "$bin" new smoke-app --eaglet-path "$GITHUB_WORKSPACE/crates/eaglet"
+          "$bin" g resource products --path smoke-app
+          cd smoke-app
+          cargo build
+          cargo test
+
+      - name: package
+        shell: bash
+        run: |
+          mkdir "$ARCHIVE"
+          cp "target/${{ matrix.target }}/release/$EXE" README.md CHANGELOG.md LICENSE-MIT LICENSE-APACHE "$ARCHIVE"/
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            7z a "$ARCHIVE.zip" "$ARCHIVE" > /dev/null
+            echo "ASSET=$ARCHIVE.zip" >> "$GITHUB_ENV"
+          else
+            tar czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+            echo "ASSET=$ARCHIVE.tar.gz" >> "$GITHUB_ENV"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: ${{ env.ASSET }}
+          if-no-files-found: error
+
+  release:
+    name: GitHub release
+    needs: [version, build]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: checksums
+        run: cd dist && sha256sum -- * > SHA256SUMS && cat SHA256SUMS
+      - name: release notes from CHANGELOG.md
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          # the "## [x.y.z]" section, up to the next "## [" heading
+          awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "::warning::CHANGELOG.md has no [$VERSION] section; using generated notes"
+          fi
+      - name: create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          args=(--repo "$GITHUB_REPOSITORY" --title "eaglet $VERSION" --verify-tag)
+          if [ -s notes.md ]; then args+=(--notes-file notes.md); else args+=(--generate-notes); fi
+          case "$VERSION" in *-*) args+=(--prerelease) ;; esac
+          gh release create "$GITHUB_REF_NAME" dist/* "${args[@]}"
+
+  publish:
+    name: crates.io
+    needs: [version, build, release]
+    # after the release on a tag; on a manual run the release is skipped and this is a dry run
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: dry run
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        run: cargo publish --workspace --locked --dry-run
+      - name: publish eaglet-macros, eaglet, eaglet-cli
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
+            echo "::error::the CARGO_REGISTRY_TOKEN secret is not set; nothing was published"
+            exit 1
+          fi
+          # dependency order; cargo waits until each crate is in the index before the next one.
+          # A crate already on crates.io at this version (a re-run) is skipped.
+          for crate in eaglet-macros eaglet eaglet-cli; do
+            status=$(curl -s -o /dev/null -w '%{http_code}' \
+              -A "eaglet-release (https://github.com/uniqtechteam/eaglet)" \
+              "https://crates.io/api/v1/crates/$crate/$VERSION")
+            if [ "$status" = "200" ]; then
+              echo "$crate $VERSION is already on crates.io, skipping"
+              continue
+            fi
+            cargo publish --locked -p "$crate"
+          done

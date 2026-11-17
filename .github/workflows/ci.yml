@@ -57,6 +57,14 @@ jobs:
         env:
           EAGLET_GENERATED_TARGET: ${{ github.workspace }}/target/generated
 
+  package:
+    name: cargo publish --dry-run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo publish --workspace --locked --dry-run
+
   deny:
     name: cargo-deny
     runs-on: ubuntu-latest
