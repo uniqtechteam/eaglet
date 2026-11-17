@@ -443,6 +443,19 @@ A missing record becomes a 404, a duplicate a 409, and anything unexpected a 500
 and tells the client nothing. lumen is not on crates.io yet either, so these projects need
 `--lumen-path` pointing at a lumen checkout.
 
+## Performance
+
+eaglet costs about half a microsecond per request over the same routes in plain Axum: 1,135 ns
+against 634 ns for a JSON `GET` called in memory, and 9 to 11% fewer requests per second when a
+server held to 4 CPUs does nothing but answer tiny routes. Guards and validation cost what the
+hand-written Axum versions cost; the difference is the request layer that adds trace ids and the
+error envelope.
+
+![Requests per second and cost per request, plain Axum against eaglet](docs/img/bench-axum.svg)
+
+Measured with `python3 bench/run.py` on an Intel i7-12700 under Linux, 2026-11-17. The method, the
+raw numbers and the caveats are in [bench/README.md](bench/README.md).
+
 ## Limits
 
 - Every provider is a singleton, built once at startup. There are no request-scoped or transient
