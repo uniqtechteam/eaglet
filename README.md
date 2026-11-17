@@ -448,6 +448,18 @@ The left column is what you write in NestJS, the right one what you write in eag
 
 The [guide](docs/guide.md) covers each of these in more detail.
 
+## Using eaglet with AI coding tools
+
+[docs/llm-guide.md](docs/llm-guide.md) is a dense reference written for coding agents such as
+Claude Code, Codex and Cursor: the exact macro syntax, the layout `eaglet new` makes, code for each
+part, and the error messages the common mistakes cause, with their fixes. Its Rust snippets are
+checked against code that compiles, like the ones in this README. [llms.txt](llms.txt) points tools
+to it and to the rest of the docs.
+
+Projects made by `eaglet new` come with a short `AGENTS.md` that gives the commands, the layout and
+the rules, and links to the guide. Its `CLAUDE.md` only imports `AGENTS.md`, so Claude Code reads
+the same instructions as every other agent.
+
 ## Cargo features
 
 | Feature | Default | Adds |

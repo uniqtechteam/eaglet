@@ -1,0 +1,16 @@
+# eaglet
+
+> eaglet is a Rust web framework that gives Axum apps the structure NestJS developers know: modules with imports and exports, dependency injection through `#[injectable]` structs whose `Arc<T>` fields are other providers, controllers written as `#[controller]` impl blocks, guards, request validation with the `validator` crate, one JSON error format, OpenAPI with Swagger UI, an in-memory `TestApp` that swaps providers for fakes, and the `eaglet` command line (`eaglet new`, `eaglet g resource`). Wiring mistakes are reported when the app starts, with the provider and module named. Underneath it is a plain `axum::Router`. Version 0.1, Rust 1.88 or newer, MIT or Apache-2.0.
+
+Coding agents writing an eaglet app should read the guide for coding agents first: it has the exact macro syntax, the project layout, copyable code for every part and the error messages common mistakes cause. Every Rust snippet in these documents is checked against code that compiles in the repository.
+
+## Docs
+
+- [Guide for coding agents](https://raw.githubusercontent.com/uniqtechteam/eaglet/main/docs/llm-guide.md): rules, layout, macro syntax, testing with fakes, lumen, common mistakes and their messages
+- [README](https://raw.githubusercontent.com/uniqtechteam/eaglet/main/README.md): what eaglet is, a NestJS to eaglet walkthrough and the concept table
+- [Guide](https://raw.githubusercontent.com/uniqtechteam/eaglet/main/docs/guide.md): modules, providers, controllers, guards, validation, errors, layers, testing, API docs and the command line in detail
+- [API reference](https://docs.rs/eaglet): the eaglet crate on docs.rs
+
+## Examples
+
+- [examples/shop](https://github.com/uniqtechteam/eaglet/tree/main/examples/shop): a complete app with sign-up, JWT sign-in, a guard, SQLite through SQLx, and tests with and without fakes
