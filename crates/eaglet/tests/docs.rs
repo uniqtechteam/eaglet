@@ -26,8 +26,16 @@ const SOURCES: &[&str] = &[
 /// The documents whose Rust blocks are checked.
 const DOCS: &[&str] = &["README.md", "docs"];
 
-fn root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
+/// The workspace root, or `None` when the crate is built from its crates.io package, which has
+/// neither the docs nor the example to check them against.
+fn root() -> Option<PathBuf> {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    if root.join("docs/diagrams").is_dir() {
+        Some(root)
+    } else {
+        eprintln!("not in the eaglet repository, nothing to check");
+        None
+    }
 }
 
 fn files(dir: &Path, ext: &[&str], out: &mut Vec<PathBuf>) {
@@ -91,7 +99,7 @@ fn matches(source: &[&str], block: &str) -> bool {
 
 #[test]
 fn every_rust_block_in_the_docs_is_real_code() {
-    let root = root();
+    let Some(root) = root() else { return };
     let mut sources = Vec::new();
     for dir in SOURCES {
         files(&root.join(dir), &["rs", "tmpl"], &mut sources);
@@ -133,7 +141,7 @@ fn every_rust_block_in_the_docs_is_real_code() {
 
 #[test]
 fn every_diagram_in_the_docs_is_one_of_docs_diagrams() {
-    let root = root();
+    let Some(root) = root() else { return };
     let mut diagrams = Vec::new();
     files(&root.join("docs/diagrams"), &["mmd"], &mut diagrams);
     let diagrams: Vec<String> = diagrams
