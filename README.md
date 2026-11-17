@@ -12,6 +12,8 @@ create .dockerignore
 create .env.example
 create .github/workflows/ci.yml
 create .gitignore
+create AGENTS.md
+create CLAUDE.md
 create Cargo.toml
 create Dockerfile
 create README.md

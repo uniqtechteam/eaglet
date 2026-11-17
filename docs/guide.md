@@ -411,8 +411,9 @@ Options:
 ```
 
 The project has an `AppModule`, a `ConfigModule` that reads `PORT` from the environment, a
-`/health` route, Swagger UI at `/docs`, tests, a Dockerfile that runs as a non-root user, and a CI
-workflow. With `--db`, a database module provides the pool or client and connects on first use,
+`/health` route, Swagger UI at `/docs`, tests, a Dockerfile that runs as a non-root user, a CI
+workflow, and an `AGENTS.md` (with a `CLAUDE.md` that points to it) telling coding agents where
+the conventions are. With `--db`, a database module provides the pool or client and connects on first use,
 so the app and its tests start without a database running.
 
 `eaglet g <kind> <name>`, run inside the project, adds a part and wires it in:

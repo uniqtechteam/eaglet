@@ -1,0 +1,39 @@
+# AGENTS.md
+
+Notes for anyone changing {{title}}, people and coding agents alike.
+
+{{title}} is an [eaglet](https://github.com/uniqtechteam/eaglet) app: NestJS-style modules,
+providers, controllers and guards on top of Axum. Before writing eaglet code, read the reference
+for coding agents: https://github.com/uniqtechteam/eaglet/blob/main/docs/llm-guide.md
+
+## Commands
+
+```bash
+cargo run                                      # http://localhost:3000, API docs at /docs
+cargo test
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+eaglet g resource <name>                       # a CRUD feature, added to AppModule
+```
+
+## Layout
+
+- `src/app_module.rs`: the root module. Every feature module is listed in its `imports`.
+- `src/<feature>/`: one folder per feature. `mod.rs` holds the `#[module(...)]`, next to
+  `controller.rs`, `service.rs`, `repository.rs` and `dto.rs`.
+- `src/config.rs` and, with a database, `src/db.rs` (or `src/db/`): modules other features import.
+- `tests/`: one file per feature, using `eaglet::testing::TestApp`.
+
+## Rules
+
+- Add features with `eaglet g`, or by hand in the same layout.
+- Routes live in `#[controller]` impl blocks, and every controller and provider is listed in its
+  module's `#[module(...)]`. Do not build an `axum::Router` by hand for them.
+- Dependencies are `Arc<T>` fields of `#[injectable]` structs. State a provider owns is a field
+  marked `#[inject(default)]`.
+- Storage sits behind a trait bound with `provide!(dyn Trait => Impl)`, so tests can replace it with
+  `override_provider`.
+- Handlers and services return `Result<T, HttpError>`. Unexpected errors, such as a failed
+  query, go through `HttpError::internal`, which logs them and tells the client nothing.
+- Request bodies are `Valid<Json<T>>`, with `T` deriving `Deserialize`, `Validate` and `ToSchema`.
+- Finish every change with `cargo fmt`, `cargo clippy --all-targets -- -D warnings` and `cargo test`.
