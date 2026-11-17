@@ -12,6 +12,8 @@ create .dockerignore
 create .env.example
 create .github/workflows/ci.yml
 create .gitignore
+create AGENTS.md
+create CLAUDE.md
 create Cargo.toml
 create Dockerfile
 create README.md
@@ -61,9 +63,15 @@ you would write for the same thing. `eaglet g resource products` writes the same
 in-memory repository, so you can follow along in your own project. Run the finished example with
 `cargo run -p shop` and test it with `cargo test -p shop`.
 
+Each step shows the NestJS code first and the eaglet code second. The line above every block says
+which one it is and the file it lives in; TypeScript is NestJS, Rust is eaglet.
+
 ### 1. A DTO with validation
 
-In NestJS, class-validator decorators on a class, checked by `ValidationPipe`:
+NestJS puts class-validator decorators on a class and checks them with `ValidationPipe`. eaglet
+uses a struct with the `validator` crate's rules.
+
+**NestJS** · `src/products/dto/new-product.dto.ts`
 
 ```ts
 export class NewProductDto {
@@ -75,8 +83,7 @@ export class NewProductDto {
 }
 ```
 
-In eaglet, a struct with the `validator` crate's rules. `ToSchema` puts it in the API docs; leave it
-out and the docs show the body as "any value".
+**eaglet** · [`src/products/dto.rs`](examples/shop/src/products/dto.rs)
 
 ```rust
 /// The body of `POST /products`.
@@ -91,7 +98,11 @@ pub struct NewProduct {
 }
 ```
 
+`ToSchema` puts the struct in the API docs; leave it out and the docs show the body as "any value".
+
 ### 2. A service
+
+**NestJS** · `src/products/products.service.ts`
 
 ```ts
 @Injectable()
@@ -106,9 +117,7 @@ export class ProductsService {
 }
 ```
 
-An `#[injectable]` struct's fields are the providers it needs, each behind an `Arc`. Here the
-repository is a trait, so the module decides which storage it gets and a test can hand it a fake.
-Errors are values: `HttpError::not_found` is the `NotFoundException`.
+**eaglet** · [`src/products/service.rs`](examples/shop/src/products/service.rs)
 
 ```rust
 #[injectable]
@@ -128,7 +137,13 @@ impl ProductsService {
 }
 ```
 
+An `#[injectable]` struct's fields are the providers it needs, each behind an `Arc`. Here the
+repository is a trait, so the module decides which storage it gets and a test can hand it a fake.
+Errors are values: `HttpError::not_found` is the `NotFoundException`.
+
 The repository trait is ordinary Rust. The shop stores products in SQLite through SQLx:
+
+**eaglet** · [`src/products/repository.rs`](examples/shop/src/products/repository.rs)
 
 ```rust
 #[async_trait]
@@ -140,6 +155,8 @@ pub trait ProductsRepo: Send + Sync {
 ```
 
 ### 3. A controller
+
+**NestJS** · `src/products/products.controller.ts`
 
 ```ts
 @Controller('products')
@@ -159,10 +176,7 @@ export class ProductsController {
 }
 ```
 
-The controller is an `#[injectable]` struct too, and `#[controller]` turns its `impl` block into
-routes. Handlers take `&self` and any Axum extractors: `Path` is `@Param`, `Valid<Json<T>>` is
-`@Body` plus the validation pipe. A path that does not parse as `i64` is a 400 before the handler
-runs, which is what `ParseIntPipe` did.
+**eaglet** · [`src/products/controller.rs`](examples/shop/src/products/controller.rs)
 
 ```rust
 #[injectable]
@@ -194,9 +208,14 @@ impl ProductsController {
 }
 ```
 
-Doc comments become the summaries in the OpenAPI document.
+The controller is an `#[injectable]` struct too, and `#[controller]` turns its `impl` block into
+routes. Handlers take `&self` and any Axum extractors: `Path` is `@Param`, `Valid<Json<T>>` is
+`@Body` plus the validation pipe. A path that does not parse as `i64` is a 400 before the handler
+runs, which is what `ParseIntPipe` did. Doc comments become the summaries in the OpenAPI document.
 
 ### 4. A module
+
+**NestJS** · `src/products/products.module.ts`
 
 ```ts
 @Module({
@@ -206,6 +225,8 @@ Doc comments become the summaries in the OpenAPI document.
 })
 export class ProductsModule {}
 ```
+
+**eaglet** · [`src/products/mod.rs`](examples/shop/src/products/mod.rs)
 
 ```rust
 #[module(
@@ -226,6 +247,8 @@ ProductsService needs dyn ProductsRepo, which ProductsModule does not provide or
 
 ### 5. A guard
 
+**NestJS** · `src/auth/auth.guard.ts`
+
 ```ts
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -241,9 +264,7 @@ export class AuthGuard implements CanActivate {
 }
 ```
 
-A guard is a provider that implements `Guard`. It gets the request head before the body is read,
-and it hands the user to the handler through `parts.extensions`, where `Extension<CurrentUser>`
-picks it up.
+**eaglet** · [`src/auth/guard.rs`](examples/shop/src/auth/guard.rs)
 
 ```rust
 #[injectable]
@@ -278,17 +299,23 @@ impl Guard for AuthGuard {
 }
 ```
 
-This check never waits, so it returns a ready future. A guard that looks something up writes
-`async fn can_activate` instead ([guide](docs/guide.md#guards)). `AuthModule` lists the guard in its
-`exports`, the same way a NestJS module exports a provider for other modules to use.
+A guard is a provider that implements `Guard`. It gets the request head before the body is read,
+and it hands the user to the handler through `parts.extensions`, where `Extension<CurrentUser>`
+picks it up. This check never waits, so it returns a ready future. A guard that looks something up
+writes `async fn can_activate` instead ([guide](docs/guide.md#guards)). `AuthModule` lists the
+guard in its `exports`, the same way a NestJS module exports a provider for other modules to use.
 
 ### 6. Start the app
+
+**NestJS** · `src/main.ts`
 
 ```ts
 const app = await NestFactory.create(AppModule);
 SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
 await app.listen(3000);
 ```
+
+**eaglet** · [`src/main.rs`](examples/shop/src/main.rs)
 
 ```rust
 let app = App::new::<AppModule>()
@@ -315,14 +342,19 @@ and one with an empty name and a price of zero:
 
 ### 7. Test it with a fake
 
+NestJS builds a testing module and overrides the repository. `TestApp` does the same: it builds the
+real module tree, swaps the providers you name, and sends requests in memory, with no port and no
+database.
+
+**NestJS** · `test/products.e2e-spec.ts`
+
 ```ts
 const module = await Test.createTestingModule({ imports: [AppModule] })
   .overrideProvider(PRODUCTS_REPO).useValue(new FakeProducts())
   .compile();
 ```
 
-`TestApp` builds the real module tree, swaps the providers you name, and sends requests in memory,
-with no port and no database:
+**eaglet** · [`tests/fakes.rs`](examples/shop/tests/fakes.rs)
 
 ```rust
 async fn app() -> TestApp {
@@ -391,6 +423,8 @@ existing Axum app.
 
 ## NestJS to eaglet
 
+The left column is what you write in NestJS, the right one what you write in eaglet.
+
 | NestJS | eaglet |
 | --- | --- |
 | `@Module({ imports, controllers, providers, exports })` | `#[module(imports = [..], controllers = [..], providers = [..], exports = [..])]` on a unit struct |
@@ -413,6 +447,18 @@ existing Axum app.
 | `nest new`, `nest g resource` | `eaglet new`, `eaglet g resource` |
 
 The [guide](docs/guide.md) covers each of these in more detail.
+
+## Using eaglet with AI coding tools
+
+[docs/llm-guide.md](docs/llm-guide.md) is a dense reference written for coding agents such as
+Claude Code, Codex and Cursor: the exact macro syntax, the layout `eaglet new` makes, code for each
+part, and the error messages the common mistakes cause, with their fixes. Its Rust snippets are
+checked against code that compiles, like the ones in this README. [llms.txt](llms.txt) points tools
+to it and to the rest of the docs.
+
+Projects made by `eaglet new` come with a short `AGENTS.md` that gives the commands, the layout and
+the rules, and links to the guide. Its `CLAUDE.md` only imports `AGENTS.md`, so Claude Code reads
+the same instructions as every other agent.
 
 ## Cargo features
 

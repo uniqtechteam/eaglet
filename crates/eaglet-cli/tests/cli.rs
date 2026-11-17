@@ -41,11 +41,29 @@ fn ac_fr_004_a_dry_run_lists_the_files_and_writes_nothing() {
         "create src/db.rs",
         "create Dockerfile",
         "create .github/workflows/ci.yml",
+        "create AGENTS.md",
+        "create CLAUDE.md",
     ] {
         assert!(text.contains(file), "missing `{file}` in:\n{text}");
     }
     assert!(text.contains("dry run"));
     assert!(!dir.join("shop").exists());
+}
+
+#[test]
+fn a_new_project_tells_coding_agents_where_the_conventions_are() {
+    let dir = scratch("agents");
+    assert!(eaglet(&dir, &["new", "order-desk"]).status.success());
+    let project = dir.join("order-desk");
+    let agents = std::fs::read_to_string(project.join("AGENTS.md")).unwrap();
+    assert!(agents.contains("Order Desk is an [eaglet]"), "{agents}");
+    assert!(agents.contains("https://github.com/uniqtechteam/eaglet/blob/main/docs/llm-guide.md"));
+    assert!(
+        !agents.contains("{{"),
+        "a template variable was left in:\n{agents}"
+    );
+    let claude = std::fs::read_to_string(project.join("CLAUDE.md")).unwrap();
+    assert!(claude.lines().any(|l| l == "@AGENTS.md"), "{claude}");
 }
 
 #[test]

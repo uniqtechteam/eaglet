@@ -173,7 +173,7 @@ pub fn plan_new(
         ("db_deps", db_deps.as_str()),
         ("db_env", db_env.as_str()),
     ];
-    let files: [(&str, &str); 13] = [
+    let files: [(&str, &str); 15] = [
         (
             "Cargo.toml",
             include_str!("../templates/new/Cargo.toml.tmpl"),
@@ -217,6 +217,8 @@ pub fn plan_new(
             include_str!("../templates/new/ci.yml.tmpl"),
         ),
         ("README.md", include_str!("../templates/new/README.md.tmpl")),
+        ("AGENTS.md", include_str!("../templates/new/AGENTS.md.tmpl")),
+        ("CLAUDE.md", include_str!("../templates/new/CLAUDE.md.tmpl")),
     ];
     let mut plan = Plan::new(root);
     for (rel, template) in files {
