@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/eaglet", "crates/eaglet-macros", "crates/eaglet-cli", "examples/shop"]
+members = ["crates/eaglet", "crates/eaglet-macros", "crates/eaglet-cli", "examples/shop", "bench"]
 
 [workspace.package]
 version = "0.1.0-dev"
