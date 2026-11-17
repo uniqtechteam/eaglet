@@ -72,6 +72,13 @@ The first release. Needs Rust 1.88 or newer.
   `docs/guide.md` covers modules and providers, controllers, guards, validation, errors, layers,
   testing, the API docs and the command line. Every Rust block in both is copied from code the
   workspace builds and tests, and `crates/eaglet/tests/docs.rs` fails when one drifts.
+- `docs/llm-guide.md`, a reference for coding agents such as Claude Code, Codex and Cursor: the exact
+  macro syntax, the project layout, code for each part, testing with fakes, lumen, and the compile and
+  startup messages common mistakes cause, with their fixes. Its snippets are checked like the README's,
+  and the startup messages are tested in `crates/eaglet/tests/mistakes.rs`. `llms.txt` at the root
+  points tools to it.
+- `eaglet new` writes an `AGENTS.md` with the project's commands, layout and rules, linking to the
+  guide for coding agents, and a `CLAUDE.md` that imports it.
 
 ### Fixed
 
