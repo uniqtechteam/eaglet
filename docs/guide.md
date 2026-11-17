@@ -43,7 +43,7 @@ struct MailModule;
 
 `providers` takes four kinds of entries:
 
-| Entry | Like NestJS | Builds |
+| eaglet entry | NestJS equivalent | Builds |
 | --- | --- | --- |
 | `Greeter` | a class provider | the `#[injectable]` struct, from its fields |
 | `provide!(dyn Mailer => SmtpMailer)` | `{ provide: MAILER, useClass: SmtpMailer }` | `SmtpMailer`, available as `Arc<dyn Mailer>` |
