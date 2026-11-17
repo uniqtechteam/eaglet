@@ -647,7 +647,7 @@ the app at all. `eaglet g` adds the import for you; when writing a module by han
 
 ## More
 
-- [README](../README.md): the NestJS walkthrough and the concept table.
+- [README](../README.md): a walkthrough that builds the products feature of the shop example.
 - [Guide](guide.md): each part in more detail, including layers and the API docs.
 - [`examples/shop`](../examples/shop): a complete app with sign-up, JWT sign-in, a guard, SQLite
   and both kinds of tests.

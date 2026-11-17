@@ -1,4 +1,5 @@
-//! Every Rust block in `README.md` and `docs/*.md` (the guide and the guide for coding agents) is
+//! Every Rust block in `README.md` and `docs/*.md` (the guide, the guide for coding agents and the one for
+//! NestJS developers) is
 //! copied from code that this workspace builds and tests, so the docs cannot drift from the code
 //! without this test failing.
 //!
@@ -28,7 +29,12 @@ const SOURCES: &[&str] = &[
 const DOCS: &[&str] = &["README.md", "docs"];
 
 /// Documents that must be found under `DOCS`, each with Rust blocks to check.
-const MUST_CHECK: &[&str] = &["README.md", "docs/guide.md", "docs/llm-guide.md"];
+const MUST_CHECK: &[&str] = &[
+    "README.md",
+    "docs/guide.md",
+    "docs/llm-guide.md",
+    "docs/for-nestjs-developers.md",
+];
 
 /// The workspace root, or `None` when the crate is built from its crates.io package, which has
 /// neither the docs nor the example to check them against.

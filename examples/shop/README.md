@@ -66,5 +66,5 @@ Every error has the same shape, for example a product created without signing in
 
 - `tests/flow.rs` runs the whole app against SQLite in memory: sign-up, sign-in, ownership rules,
   validation, and the API docs listing every route.
-- `tests/fakes.rs` replaces `ProductsRepo` with a fake, the NestJS `overrideProvider` way, and opens no
+- `tests/fakes.rs` replaces `ProductsRepo` with a fake through `override_provider` and opens no
   database.

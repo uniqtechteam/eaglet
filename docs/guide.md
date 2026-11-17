@@ -2,8 +2,7 @@
 
 The README walks through one feature of the shop example. This guide covers each part on its own:
 modules and providers, controllers, guards, validation, errors, layers, testing, the API docs and
-the command line. If you know NestJS, the
-[concept table in the README](../README.md#nestjs-to-eaglet) is the short version.
+the command line.
 
 Most examples here come from [`crates/eaglet/tests/guide.rs`](../crates/eaglet/tests/guide.rs), a
 small app with a mailer, an API key guard and one controller. It runs with `cargo test -p eaglet
@@ -43,12 +42,12 @@ struct MailModule;
 
 `providers` takes four kinds of entries:
 
-| eaglet entry | NestJS equivalent | Builds |
-| --- | --- | --- |
-| `Greeter` | a class provider | the `#[injectable]` struct, from its fields |
-| `provide!(dyn Mailer => SmtpMailer)` | `{ provide: MAILER, useClass: SmtpMailer }` | `SmtpMailer`, available as `Arc<dyn Mailer>` |
-| `ProviderDef::value(v)` | `useValue` | nothing; `v` is used as it is |
-| `ProviderDef::factory(\|\| async { .. })` | async `useFactory` | whatever the async function returns, at startup |
+| Entry | Builds |
+| --- | --- |
+| `Greeter` | the `#[injectable]` struct, from its fields |
+| `provide!(dyn Mailer => SmtpMailer)` | `SmtpMailer`, available as `Arc<dyn Mailer>` |
+| `ProviderDef::value(v)` | nothing; `v` is used as it is |
+| `ProviderDef::factory(\|\| async { .. })` | whatever the async function returns, at startup |
 
 A factory returns a `Result`, and its error stops the app. This is how a database pool is usually
 made:
@@ -119,7 +118,7 @@ The other startup errors are a circle of providers (the message shows the whole 
 `A → B → A`), the same provider declared in two modules, a module exporting something it does not
 have, and a factory that failed. Each one names the provider and the module.
 
-`app.provider::<T>()` returns a built provider, like `app.get(T)` in NestJS. It is mostly useful
+`app.provider::<T>()` returns a built provider. It is mostly useful
 in tests and in `main` before the server starts.
 
 ## Controllers and routes
@@ -222,7 +221,7 @@ assert_eq!(
 );
 ```
 
-Nested structs and lists show as paths, such as `address.city` or `items[0].qty`. Validation is the
+Fields of inner structs and lists show as paths, such as `address.city` or `items[0].qty`. Validation is the
 `validate` feature, on by default.
 
 ## Errors
@@ -268,7 +267,7 @@ Every error leaves the app as one JSON shape:
 
 ## Layers
 
-Tower layers do what interceptors and middleware do in NestJS: timing, logging, compression,
+Tower layers wrap routes with work that is not the handler's: timing, logging, compression,
 timeouts, headers. Put `#[layer(..)]` on the `impl` block for every route of the controller, or on
 one method. The controller above adds a header to every response:
 
@@ -446,7 +445,7 @@ error: src/products already exists; pick another name or add parts with eaglet g
 ## Using eaglet inside an Axum app
 
 `App` is a thin layer over Axum. `app.into_router()` returns the finished `axum::Router`, with the
-trace id and error envelope already applied, so you can nest it under a path, merge it with
+trace id and error envelope already applied, so you can mount it under a path, merge it with
 routes you already have, or serve it with your own server setup. Handlers are plain async
 functions over Axum extractors, so moving a route out of eaglet means moving the function and
 passing its dependencies another way.

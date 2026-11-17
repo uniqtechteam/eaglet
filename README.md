@@ -1,8 +1,9 @@
 # eaglet
 
-eaglet gives Rust web apps the structure NestJS developers know: modules, dependency injection,
-controllers, guards, validation, one error format, testing modules and a generator CLI. Underneath
-it is a plain `axum::Router`, so every Axum extractor and Tower middleware keeps working.
+eaglet is a Rust web framework on Axum that gives an app its structure: modules, dependency
+injection, controllers, guards, validation, one error format, testing with fakes and a generator
+CLI. Underneath it is a plain `axum::Router`, so every Axum extractor and Tower middleware keeps
+working.
 
 **Status:** 0.1. Needs Rust 1.88 or newer.
 
@@ -41,10 +42,18 @@ create tests/products.rs
 The new project builds, passes `cargo clippy -- -D warnings` and its tests as generated, and serves
 Swagger UI at `/docs`.
 
-Our own Rust services already used a NestJS-style layout on Axum, with a folder per feature holding
-a controller, a service and a repository. What we kept writing by hand in every project was the
-wiring between them: who builds what, in which order, and how a test swaps the database for a fake.
-eaglet is that layout with the wiring done for you, and checked when the app starts.
+## Why
+
+Axum gives you routing and extractors and leaves the shape of the app to you. Our own Rust services
+ended up with the same shape every time: a folder per feature holding a controller, a service and a
+repository. What we kept writing by hand in every project was the wiring between them: who builds
+what, in which order, how a handler reaches the service, and how a test swaps the database for a
+fake. That code is easy to get wrong and tedious to read.
+
+eaglet is that layout with the wiring done for you. A module lists what it provides and what it
+needs, and `App::new` builds everything once at startup. If something is missing, the app does not
+start, and the error names the provider and the module. Requests never look anything up: the
+handlers are ordinary Axum handlers that already hold what they need.
 
 ## Install
 
@@ -56,34 +65,28 @@ The CLI is called `eaglet`. Projects it creates depend on `eaglet` from crates.i
 checkout instead, use `eaglet new shop --eaglet-path ../eaglet/crates/eaglet`. Release binaries for
 Linux, macOS and Windows are attached to each GitHub release.
 
-## From NestJS in half an hour
+## Guides
 
-This walks through the products feature of [`examples/shop`](examples/shop), next to the NestJS code
-you would write for the same thing. `eaglet g resource products` writes the same files with an
-in-memory repository, so you can follow along in your own project. Run the finished example with
-`cargo run -p shop` and test it with `cargo test -p shop`.
+- [The guide](docs/guide.md): each part on its own, in more detail.
+- [For coding agents](docs/llm-guide.md): the exact syntax and the common mistakes, for Claude
+  Code, Codex, Cursor and the like.
+- Coming from NestJS? See [eaglet for NestJS developers](docs/for-nestjs-developers.md).
 
-Each step shows the NestJS code first and the eaglet code second. The line above every block says
-which one it is and the file it lives in; TypeScript is NestJS, Rust is eaglet.
+## Build a feature in half an hour
+
+This walks through the products feature of [`examples/shop`](examples/shop): a list of products
+that anyone can read and that signed-in users can put on sale. `eaglet g resource products` writes
+the same files with an in-memory repository, so you can follow along in your own project. Run the
+finished example with `cargo run -p shop` and test it with `cargo test -p shop`.
+
+The line above every block names the file it comes from.
 
 ### 1. A DTO with validation
 
-NestJS puts class-validator decorators on a class and checks them with `ValidationPipe`. eaglet
-uses a struct with the `validator` crate's rules.
+A request body is a struct. The `validator` crate's rules on its fields say what a valid body looks
+like.
 
-**NestJS** · `src/products/dto/new-product.dto.ts`
-
-```ts
-export class NewProductDto {
-  @IsString() @Length(1, 200)
-  name: string;
-
-  @IsInt() @Min(1) @Max(100_000_000)
-  price_cents: number;
-}
-```
-
-**eaglet** · [`src/products/dto.rs`](examples/shop/src/products/dto.rs)
+[`src/products/dto.rs`](examples/shop/src/products/dto.rs)
 
 ```rust
 /// The body of `POST /products`.
@@ -102,22 +105,10 @@ pub struct NewProduct {
 
 ### 2. A service
 
-**NestJS** · `src/products/products.service.ts`
+The business rules live in a service. It needs somewhere to keep products, so it asks for a
+repository.
 
-```ts
-@Injectable()
-export class ProductsService {
-  constructor(@Inject(PRODUCTS_REPO) private repo: ProductsRepo) {}
-
-  async find(id: number) {
-    const product = await this.repo.get(id);
-    if (!product) throw new NotFoundException(`no product with id ${id}`);
-    return product;
-  }
-}
-```
-
-**eaglet** · [`src/products/service.rs`](examples/shop/src/products/service.rs)
+[`src/products/service.rs`](examples/shop/src/products/service.rs)
 
 ```rust
 #[injectable]
@@ -137,13 +128,14 @@ impl ProductsService {
 }
 ```
 
-An `#[injectable]` struct's fields are the providers it needs, each behind an `Arc`. Here the
-repository is a trait, so the module decides which storage it gets and a test can hand it a fake.
-Errors are values: `HttpError::not_found` is the `NotFoundException`.
+An `#[injectable]` struct's fields are the providers it needs, each behind an `Arc`. You never call
+a constructor: the app builds the service once and hands it the repository. Here the repository is a
+trait, so the module decides which storage it gets and a test can hand it a fake. Errors are values:
+`HttpError::not_found` becomes a 404.
 
 The repository trait is ordinary Rust. The shop stores products in SQLite through SQLx:
 
-**eaglet** · [`src/products/repository.rs`](examples/shop/src/products/repository.rs)
+[`src/products/repository.rs`](examples/shop/src/products/repository.rs)
 
 ```rust
 #[async_trait]
@@ -156,27 +148,7 @@ pub trait ProductsRepo: Send + Sync {
 
 ### 3. A controller
 
-**NestJS** · `src/products/products.controller.ts`
-
-```ts
-@Controller('products')
-export class ProductsController {
-  constructor(private products: ProductsService) {}
-
-  @Get(':id')
-  find(@Param('id', ParseIntPipe) id: number) {
-    return this.products.find(id);
-  }
-
-  @Post()
-  @UseGuards(AuthGuard)
-  create(@Req() req, @Body() input: NewProductDto) {
-    return this.products.create(req.user, input);
-  }
-}
-```
-
-**eaglet** · [`src/products/controller.rs`](examples/shop/src/products/controller.rs)
+[`src/products/controller.rs`](examples/shop/src/products/controller.rs)
 
 ```rust
 #[injectable]
@@ -209,24 +181,16 @@ impl ProductsController {
 ```
 
 The controller is an `#[injectable]` struct too, and `#[controller]` turns its `impl` block into
-routes. Handlers take `&self` and any Axum extractors: `Path` is `@Param`, `Valid<Json<T>>` is
-`@Body` plus the validation pipe. A path that does not parse as `i64` is a 400 before the handler
-runs, which is what `ParseIntPipe` did. Doc comments become the summaries in the OpenAPI document.
+routes. Handlers take `&self` and any Axum extractors. `Valid<Json<T>>` reads the body and checks
+the rules from step 1, so the handler only ever sees a valid `NewProduct`. A path that does not
+parse as `i64` is a 400 before the handler runs. Doc comments become the summaries in the OpenAPI
+document.
 
 ### 4. A module
 
-**NestJS** · `src/products/products.module.ts`
+A module ties the pieces together and says which storage the repository trait gets.
 
-```ts
-@Module({
-  imports: [AuthModule, DbModule],
-  controllers: [ProductsController],
-  providers: [ProductsService, { provide: PRODUCTS_REPO, useClass: SqlProductsRepo }],
-})
-export class ProductsModule {}
-```
-
-**eaglet** · [`src/products/mod.rs`](examples/shop/src/products/mod.rs)
+[`src/products/mod.rs`](examples/shop/src/products/mod.rs)
 
 ```rust
 #[module(
@@ -237,9 +201,9 @@ export class ProductsModule {}
 pub struct ProductsModule;
 ```
 
-`provide!(dyn ProductsRepo => SqlProductsRepo)` is the `useClass` binding, with the trait as the
-token. Visibility works as in NestJS: a module sees its own providers and what its imports export.
-Leave the `provide!` line out and the app does not start. The error names both sides:
+`provide!(dyn ProductsRepo => SqlProductsRepo)` binds the trait to the SQLite version. A module
+sees its own providers and what its imports export, nothing else. Leave the `provide!` line out and
+the app does not start. The error names both sides:
 
 ```text
 ProductsService needs dyn ProductsRepo, which ProductsModule does not provide or import
@@ -247,24 +211,9 @@ ProductsService needs dyn ProductsRepo, which ProductsModule does not provide or
 
 ### 5. A guard
 
-**NestJS** · `src/auth/auth.guard.ts`
+Only a signed-in user may put a product on sale. That check is a guard.
 
-```ts
-@Injectable()
-export class AuthGuard implements CanActivate {
-  constructor(private jwt: JwtService) {}
-
-  canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest();
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) throw new UnauthorizedException('sign in first');
-    req.user = this.jwt.verify(token);
-    return true;
-  }
-}
-```
-
-**eaglet** · [`src/auth/guard.rs`](examples/shop/src/auth/guard.rs)
+[`src/auth/guard.rs`](examples/shop/src/auth/guard.rs)
 
 ```rust
 #[injectable]
@@ -303,19 +252,11 @@ A guard is a provider that implements `Guard`. It gets the request head before t
 and it hands the user to the handler through `parts.extensions`, where `Extension<CurrentUser>`
 picks it up. This check never waits, so it returns a ready future. A guard that looks something up
 writes `async fn can_activate` instead ([guide](docs/guide.md#guards)). `AuthModule` lists the
-guard in its `exports`, the same way a NestJS module exports a provider for other modules to use.
+guard in its `exports`, so `ProductsModule` can use it by importing `AuthModule`.
 
 ### 6. Start the app
 
-**NestJS** · `src/main.ts`
-
-```ts
-const app = await NestFactory.create(AppModule);
-SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
-await app.listen(3000);
-```
-
-**eaglet** · [`src/main.rs`](examples/shop/src/main.rs)
+[`src/main.rs`](examples/shop/src/main.rs)
 
 ```rust
 let app = App::new::<AppModule>()
@@ -342,19 +283,10 @@ and one with an empty name and a price of zero:
 
 ### 7. Test it with a fake
 
-NestJS builds a testing module and overrides the repository. `TestApp` does the same: it builds the
-real module tree, swaps the providers you name, and sends requests in memory, with no port and no
-database.
+`TestApp` builds the real module tree, swaps the providers you name, and sends requests in memory,
+with no port and no database.
 
-**NestJS** · `test/products.e2e-spec.ts`
-
-```ts
-const module = await Test.createTestingModule({ imports: [AppModule] })
-  .overrideProvider(PRODUCTS_REPO).useValue(new FakeProducts())
-  .compile();
-```
-
-**eaglet** · [`tests/fakes.rs`](examples/shop/tests/fakes.rs)
+[`tests/fakes.rs`](examples/shop/tests/fakes.rs)
 
 ```rust
 async fn app() -> TestApp {
@@ -418,35 +350,22 @@ itself.*
 
 The macros write ordinary Axum code: each controller becomes an `axum::Router`, guards become
 `route_layer` middleware, and providers are `Arc`s built once at startup. Nothing is looked up at
-request time. [`App::into_router`](crates/eaglet/src/app.rs) hands you the router to nest into an
+request time. [`App::into_router`](crates/eaglet/src/app.rs) hands you the router to merge into an
 existing Axum app.
 
-## NestJS to eaglet
+## Compared with plain Axum
 
-The left column is what you write in NestJS, the right one what you write in eaglet.
+| You want | In plain Axum | In eaglet |
+| --- | --- | --- |
+| Share a service between handlers | build it in `main`, put it in `State`, pass `State<T>` around | list it in a module, hold it as an `Arc` field |
+| Swap the database in a test | thread a trait object through by hand | `TestApp::override_provider::<dyn Trait>(..)` |
+| Check a token on some routes | a `route_layer` per group of routes | `#[guard(AuthGuard)]` on the controller or the route |
+| Validate a body | call `validate()` in each handler | take `Valid<Json<T>>` |
+| One error format | an `IntoResponse` type, plus a fallback for Axum's own rejections | `HttpError`, and Axum's errors already share its envelope |
+| API docs | write the utoipa paths by hand | `#[controller]` routes and doc comments feed `app.openapi()` |
 
-| NestJS | eaglet |
-| --- | --- |
-| `@Module({ imports, controllers, providers, exports })` | `#[module(imports = [..], controllers = [..], providers = [..], exports = [..])]` on a unit struct |
-| `@Injectable()` and constructor injection | `#[injectable]` on a struct whose fields are `Arc<Provider>` |
-| `{ provide: TOKEN, useClass: Impl }` | `provide!(dyn Trait => Impl)` |
-| `useValue` / async `useFactory` | `ProviderDef::value(v)` / `ProviderDef::factory(\|\| async { .. })` |
-| `@Controller('products')`, `@Get(':id')` | `#[controller("/products")]`, `#[get("/:id")]` |
-| `@Param()`, `@Query()`, `@Body()` | Axum's `Path<T>`, `Query<T>`, `Json<T>` |
-| `ValidationPipe` with class-validator | `Valid<Json<T>>`, `Valid<Query<T>>` with `#[derive(Validate)]` |
-| `CanActivate`, `@UseGuards(AuthGuard)` | `impl Guard`, `#[guard(AuthGuard)]` on a controller or a route |
-| `req.user` | `parts.extensions.insert(user)` in the guard, `Extension<User>` in the handler |
-| Interceptors and middleware | Tower layers, `#[layer(..)]` on a controller or a route |
-| `HttpException`, `NotFoundException` | `HttpError::new(..)`, `HttpError::not_found(..)` |
-| Exception filters | One JSON envelope for every error, Axum's own included |
-| `@nestjs/swagger` | `app.openapi()`, `.swagger("/docs")`, `#[derive(ToSchema)]` on DTOs |
-| `Test.createTestingModule().overrideProvider()` | `TestApp::new::<AppModule>().override_provider::<T>(..)` |
-| supertest | `app.get("/products").send().await`, in memory |
-| `app.get(UsersService)` | `app.provider::<UsersService>()` |
-| `NestFactory.create(AppModule)`, `app.listen(3000)` | `App::new::<AppModule>().await?`, `app.listen(addr).await?` |
-| `nest new`, `nest g resource` | `eaglet new`, `eaglet g resource` |
-
-The [guide](docs/guide.md) covers each of these in more detail.
+Anything Axum offers still works inside eaglet: extractors, `Router::merge`, Tower layers, your own
+server setup. When a part of the app does not fit, write it as plain Axum and merge it in.
 
 ## Using eaglet with AI coding tools
 
@@ -491,49 +410,44 @@ and tells the client nothing. They take `lumen-orm` from crates.io;
 
 ## Performance
 
-The same three routes (a JSON `GET`, a validated `POST`, a guarded `GET`) in plain Axum, in eaglet
-and in a NestJS 11 app, loaded with `oha` at 64 connections. The table is the JSON `GET` with the
-server held to four CPUs: four Tokio worker threads for Rust, `node:cluster` with four workers for
-Node. Memory is the whole server, every process of the cluster included.
+The same three routes (a JSON `GET`, a validated `POST`, a guarded `GET`) in plain Axum and in
+eaglet, loaded with `oha` at 64 connections with the server held to four CPUs, and called in memory
+to measure each framework's own cost per request.
 
-| `GET /users/:id`, 4 CPUs | Requests/s | p99 | Memory at rest / under load |
+| Route | Plain Axum | eaglet | Difference |
 |---|---|---|---|
-| plain Axum | 501,367 | 240 µs | 3.4 / 5.9 MB |
-| eaglet | 467,635 | 322 µs | 3.5 / 6.0 MB |
-| NestJS + Express | 28,290 | 6,815 µs | 413 / 756 MB |
-| NestJS + Fastify | 159,834 | 788 µs | 422 / 511 MB |
+| `GET /users/:id` | 501,367 req/s, 601 ns | 467,635 req/s, 773 ns | -6.7%, +172 ns |
+| `POST /users` (validated) | 387,178 req/s, 1,514 ns | 343,227 req/s, 1,716 ns | -11.4%, +202 ns |
+| `GET /me` (guarded) | 455,378 req/s, 976 ns | 443,575 req/s, 1,124 ns | -2.6%, +148 ns |
 
-On one CPU (one worker thread against one Node process) the picture is the same: eaglet answered
-2.6 to 2.9 times as many requests as NestJS on Fastify on the `GET` routes and 4.1 to 4.7 times on
-the validated `POST`. The routes do almost nothing, so these are the frameworks' own costs; a
-handler that waits on a database narrows every gap.
+![Requests per second and cost per request, plain Axum against eaglet](docs/img/bench-axum.svg)
 
-![Requests per second for plain Axum, eaglet, NestJS with Express and NestJS with Fastify](docs/img/bench-frameworks.svg)
-
-Against plain Axum, eaglet costs about 150 to 200 ns per request: 773 ns against 601 ns for the
-JSON `GET` called in memory. Guards and validation cost what the hand-written Axum versions cost;
-the difference is the request layer that adds trace ids and the error envelope, and most of it is
-what any `Router::layer` costs in Axum. Over HTTP that gap is smaller than the noise between
-rounds on the machine we measured on.
+eaglet costs about 150 to 200 ns per request over plain Axum. Guards and validation cost what the
+hand-written Axum versions cost; the difference is the request layer that adds trace ids and the
+error envelope, and most of it is what any `Router::layer` costs in Axum. Over HTTP that gap is
+smaller than the noise between rounds on the machine we measured on, which is why the in-memory
+column is the one to read. The routes do almost nothing, so this is the framework's share at its
+largest; a handler that waits on a database makes it smaller.
 
 Measured with `python3 bench/run.py` on an Intel i7-12700 under Linux, 2026-11-17, medians of five
-rounds on a machine shared with other work. The method, every route in both setups, the versions,
-the raw numbers and the caveats are in [bench/README.md](bench/README.md).
+rounds on a machine shared with other work. The routes are in
+[`bench/src`](bench/src), the script in [`bench/run.py`](bench/run.py) and the medians in
+[`bench/results.csv`](bench/results.csv).
 
 ## Limits
 
 - Every provider is a singleton, built once at startup. There are no request-scoped or transient
-  providers, and no lifecycle hooks such as `onModuleInit`.
+  providers, and no hooks that run once the providers are built.
 - `#[injectable]` structs cannot be generic yet.
-- There is no built-in `ConfigModule`. Settings are a struct you provide with
+- There is no built-in config module. Settings are a struct you provide with
   `ProviderDef::value`, as `eaglet new` does.
-- There is no per-module exception filter. Errors map to `HttpError` with `map_err` or `From`, and
-  all of them share one envelope.
+- The error format cannot change per module. Errors map to `HttpError` with `map_err` or `From`,
+  and all of them share one envelope.
 - No ORM in the core. Use SQLx, the MongoDB driver or lumen; `eaglet new --db` sets up each one.
 - No GraphQL, WebSockets, server-sent events or microservice transports.
 - Swagger UI loads a pinned `swagger-ui-dist` from jsDelivr with integrity hashes. For offline or
   strict-CSP deployments, skip `.swagger()` and serve `app.openapi()` with your own UI.
-- Not released yet, so the API may still change before 0.1.
+- Version 0.1, so the API may still change between 0.x releases.
 
 ## Contributing
 
@@ -550,6 +464,6 @@ MIT OR Apache-2.0, at your option.
 
 ---
 
-eaglet is made by [UniqTech](https://uniqtech.dev). If your team is moving a NestJS service to Rust
-or getting an eaglet app ready for launch, we can help with the migration, a review, or go-live
+eaglet is made by [UniqTech](https://uniqtech.dev). If your team is moving a service to Rust or
+getting an eaglet app ready for launch, we can help with the migration, a review, or go-live
 support.
