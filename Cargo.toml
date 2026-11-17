@@ -8,8 +8,8 @@ edition = "2024"
 rust-version = "1.88"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/uniqtechteam/eaglet"
-homepage = "https://github.com/uniqtechteam/eaglet"
 authors = ["UniqTech <https://uniqtech.dev>"]
+readme = "README.md"
 keywords = ["web", "framework", "axum", "nestjs", "dependency-injection"]
 categories = ["web-programming::http-server"]
 
