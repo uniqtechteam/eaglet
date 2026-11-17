@@ -54,6 +54,12 @@ lumen-projects:
     - git clone --depth 1 --branch "$LUMEN_REF" "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/uniqtechteam/lumen.git" "$EAGLET_TEST_LUMEN_DIR"
     - cargo test -p eaglet-cli --test generated -- --ignored lumen --test-threads 2
 
+# What cargo publish would upload, built on its own: catches missing files and metadata
+# before a release tag does.
+package:
+  script:
+    - cargo publish --workspace --locked --dry-run
+
 deny:
   script:
     - cargo install --locked cargo-deny
