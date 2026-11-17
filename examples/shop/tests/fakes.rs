@@ -138,3 +138,20 @@ async fn a_new_product_belongs_to_whoever_signed_in() {
     assert_eq!(res.status(), StatusCode::CREATED);
     assert_eq!(res.json::<Value>()["owner_id"], 5);
 }
+
+/// `ProductsModule` without its repository binding.
+#[module(
+    imports = [shop::auth::AuthModule, shop::db::DbModule],
+    controllers = [shop::products::ProductsController],
+    providers = [shop::products::ProductsService]
+)]
+struct ProductsModule;
+
+#[tokio::test]
+async fn a_missing_provider_stops_the_app_with_both_names() {
+    let err = App::new::<ProductsModule>().await.unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "ProductsService needs dyn ProductsRepo, which ProductsModule does not provide or import"
+    );
+}

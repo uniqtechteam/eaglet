@@ -1,0 +1,15 @@
+flowchart TD
+    Req([HTTP request]) --> Ctx["request_context<br/>trace id from x-request-id, or a new one"]
+    Ctx --> Match{"axum::Router<br/>path and method match?"}
+    Match -- yes --> CL["controller layers<br/>#[layer(..)] on the impl"]
+    CL --> CG["controller guards<br/>Guard::can_activate(&mut Parts)"]
+    CG --> RL["route layers and guards<br/>#[layer] / #[guard] on the method"]
+    RL --> Ex["extractors<br/>Path, Query, Extension,<br/>Valid&lt;Json&lt;T&gt;&gt;"]
+    Ex --> H["handler(&self, ..)<br/>Result&lt;T, HttpError&gt;"]
+    H -- Ok --> Out([response + x-request-id])
+    Match -- "no: 404 / 405" --> Env
+    CG -- "Err(HttpError)" --> Env
+    RL -- "Err(HttpError)" --> Env
+    Ex -- "400, or 422 VALIDATION_FAILED" --> Env
+    H -- "Err(HttpError)" --> Env
+    Env["error envelope<br/>{ code, message, details, traceId }"] --> Out

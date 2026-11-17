@@ -1,7 +1,7 @@
 //! eaglet brings the `NestJS` structure to Rust web apps: modules, providers, controllers and guards,
 //! on top of plain Axum.
 //!
-//! ```ignore
+//! ```
 //! use eaglet::prelude::*;
 //!
 //! #[injectable]
