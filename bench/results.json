@@ -10,49 +10,49 @@
     "connections": 64,
     "seconds": 10,
     "rounds": 5,
-    "load_average_before": 6.533203125,
+    "load_average_before": 4.775390625,
     "date": "2026-11-17",
-    "load_average_after": 4.88623046875
+    "load_average_after": 7.64208984375
   },
   "summary": [
     {
       "case": "GET /users/:id",
-      "axum_rps": 478376,
-      "axum_p50_us": 126.3,
-      "axum_p99_us": 343.8,
-      "axum_inproc_ns": 634,
-      "eaglet_rps": 424099,
-      "eaglet_p50_us": 145.2,
-      "eaglet_p99_us": 345.5,
-      "eaglet_inproc_ns": 1135,
-      "eaglet_vs_axum_rps": -0.1135,
-      "eaglet_extra_ns": 501
+      "axum_rps": 464710,
+      "axum_p50_us": 127.2,
+      "axum_p99_us": 442.5,
+      "axum_inproc_ns": 604,
+      "eaglet_rps": 421057,
+      "eaglet_p50_us": 134.7,
+      "eaglet_p99_us": 484.2,
+      "eaglet_inproc_ns": 792,
+      "eaglet_vs_axum_rps": -0.0939,
+      "eaglet_extra_ns": 188
     },
     {
       "case": "POST /users (validated)",
-      "axum_rps": 384163,
-      "axum_p50_us": 158.8,
-      "axum_p99_us": 338.1,
-      "axum_inproc_ns": 1581,
-      "eaglet_rps": 344209,
-      "eaglet_p50_us": 176.1,
-      "eaglet_p99_us": 382.1,
-      "eaglet_inproc_ns": 2134,
-      "eaglet_vs_axum_rps": -0.104,
-      "eaglet_extra_ns": 553
+      "axum_rps": 371694,
+      "axum_p50_us": 159.0,
+      "axum_p99_us": 361.9,
+      "axum_inproc_ns": 1553,
+      "eaglet_rps": 359468,
+      "eaglet_p50_us": 167.4,
+      "eaglet_p99_us": 370.4,
+      "eaglet_inproc_ns": 1695,
+      "eaglet_vs_axum_rps": -0.0329,
+      "eaglet_extra_ns": 142
     },
     {
       "case": "GET /me (guarded)",
-      "axum_rps": 439128,
-      "axum_p50_us": 137.6,
-      "axum_p99_us": 347.6,
-      "axum_inproc_ns": 996,
-      "eaglet_rps": 399281,
-      "eaglet_p50_us": 156.1,
-      "eaglet_p99_us": 315.2,
-      "eaglet_inproc_ns": 1474,
-      "eaglet_vs_axum_rps": -0.0907,
-      "eaglet_extra_ns": 478
+      "axum_rps": 441482,
+      "axum_p50_us": 137.0,
+      "axum_p99_us": 411.0,
+      "axum_inproc_ns": 979,
+      "eaglet_rps": 386264,
+      "eaglet_p50_us": 152.9,
+      "eaglet_p99_us": 528.8,
+      "eaglet_inproc_ns": 1126,
+      "eaglet_vs_axum_rps": -0.1251,
+      "eaglet_extra_ns": 147
     }
   ],
   "rounds": [
@@ -60,271 +60,271 @@
       "round": 1,
       "case": "GET /users/:id",
       "framework": "axum",
-      "rps": 482037,
-      "p50_us": 125.9,
-      "p99_us": 343.5,
-      "requests": 4823242
+      "rps": 466002,
+      "p50_us": 126.7,
+      "p99_us": 441.4,
+      "requests": 4662735
     },
     {
       "round": 1,
       "case": "GET /users/:id",
       "framework": "eaglet",
-      "rps": 419719,
-      "p50_us": 145.2,
-      "p99_us": 377.4,
-      "requests": 4200705
+      "rps": 333117,
+      "p50_us": 150.2,
+      "p99_us": 640.6,
+      "requests": 3333751
     },
     {
       "round": 1,
       "case": "POST /users (validated)",
       "framework": "axum",
-      "rps": 384163,
+      "rps": 389258,
+      "p50_us": 156.8,
+      "p99_us": 333.1,
+      "requests": 3894836
+    },
+    {
+      "round": 1,
+      "case": "POST /users (validated)",
+      "framework": "eaglet",
+      "rps": 191092,
+      "p50_us": 236.9,
+      "p99_us": 1781.0,
+      "requests": 1911895
+    },
+    {
+      "round": 1,
+      "case": "GET /me (guarded)",
+      "framework": "axum",
+      "rps": 441482,
+      "p50_us": 137.0,
+      "p99_us": 411.0,
+      "requests": 4418207
+    },
+    {
+      "round": 1,
+      "case": "GET /me (guarded)",
+      "framework": "eaglet",
+      "rps": 411886,
+      "p50_us": 144.2,
+      "p99_us": 493.8,
+      "requests": 4120938
+    },
+    {
+      "round": 2,
+      "case": "GET /users/:id",
+      "framework": "eaglet",
+      "rps": 421057,
+      "p50_us": 134.7,
+      "p99_us": 484.2,
+      "requests": 4213427
+    },
+    {
+      "round": 2,
+      "case": "GET /users/:id",
+      "framework": "axum",
+      "rps": 505701,
+      "p50_us": 123.9,
+      "p99_us": 226.4,
+      "requests": 5059297
+    },
+    {
+      "round": 2,
+      "case": "POST /users (validated)",
+      "framework": "eaglet",
+      "rps": 321660,
+      "p50_us": 172.3,
+      "p99_us": 774.8,
+      "requests": 3218186
+    },
+    {
+      "round": 2,
+      "case": "POST /users (validated)",
+      "framework": "axum",
+      "rps": 385245,
       "p50_us": 158.8,
-      "p99_us": 334.3,
-      "requests": 3845721
-    },
-    {
-      "round": 1,
-      "case": "POST /users (validated)",
-      "framework": "eaglet",
-      "rps": 350412,
-      "p50_us": 174.0,
-      "p99_us": 364.3,
-      "requests": 3505947
-    },
-    {
-      "round": 1,
-      "case": "GET /me (guarded)",
-      "framework": "axum",
-      "rps": 455747,
-      "p50_us": 135.4,
-      "p99_us": 302.9,
-      "requests": 4560362
-    },
-    {
-      "round": 1,
-      "case": "GET /me (guarded)",
-      "framework": "eaglet",
-      "rps": 402158,
-      "p50_us": 154.9,
-      "p99_us": 304.6,
-      "requests": 4024097
-    },
-    {
-      "round": 2,
-      "case": "GET /users/:id",
-      "framework": "eaglet",
-      "rps": 428359,
-      "p50_us": 143.5,
-      "p99_us": 345.5,
-      "requests": 4286068
-    },
-    {
-      "round": 2,
-      "case": "GET /users/:id",
-      "framework": "axum",
-      "rps": 492569,
-      "p50_us": 124.9,
-      "p99_us": 294.4,
-      "requests": 4927813
-    },
-    {
-      "round": 2,
-      "case": "POST /users (validated)",
-      "framework": "eaglet",
-      "rps": 351575,
-      "p50_us": 174.1,
-      "p99_us": 359.6,
-      "requests": 3518000
-    },
-    {
-      "round": 2,
-      "case": "POST /users (validated)",
-      "framework": "axum",
-      "rps": 386151,
-      "p50_us": 157.1,
-      "p99_us": 338.1,
-      "requests": 3864112
+      "p99_us": 331.5,
+      "requests": 3854201
     },
     {
       "round": 2,
       "case": "GET /me (guarded)",
       "framework": "eaglet",
-      "rps": 295172,
-      "p50_us": 177.7,
-      "p99_us": 829.6,
-      "requests": 2954656
+      "rps": 321662,
+      "p50_us": 159.5,
+      "p99_us": 710.2,
+      "requests": 3218765
     },
     {
       "round": 2,
       "case": "GET /me (guarded)",
       "framework": "axum",
-      "rps": 347329,
-      "p50_us": 152.2,
-      "p99_us": 606.8,
-      "requests": 3475101
+      "rps": 448669,
+      "p50_us": 136.7,
+      "p99_us": 351.4,
+      "requests": 4488602
     },
     {
       "round": 3,
       "case": "GET /users/:id",
       "framework": "axum",
-      "rps": 444682,
-      "p50_us": 128.7,
-      "p99_us": 470.0,
-      "requests": 4449634
+      "rps": 311742,
+      "p50_us": 150.0,
+      "p99_us": 861.9,
+      "requests": 3119312
     },
     {
       "round": 3,
       "case": "GET /users/:id",
       "framework": "eaglet",
-      "rps": 305039,
+      "rps": 470946,
+      "p50_us": 131.9,
+      "p99_us": 269.1,
+      "requests": 4711965
+    },
+    {
+      "round": 3,
+      "case": "POST /users (validated)",
+      "framework": "axum",
+      "rps": 368557,
+      "p50_us": 159.0,
+      "p99_us": 462.2,
+      "requests": 3687753
+    },
+    {
+      "round": 3,
+      "case": "POST /users (validated)",
+      "framework": "eaglet",
+      "rps": 376213,
+      "p50_us": 162.2,
+      "p99_us": 345.2,
+      "requests": 3766304
+    },
+    {
+      "round": 3,
+      "case": "GET /me (guarded)",
+      "framework": "axum",
+      "rps": 458265,
+      "p50_us": 135.5,
+      "p99_us": 285.4,
+      "requests": 4585199
+    },
+    {
+      "round": 3,
+      "case": "GET /me (guarded)",
+      "framework": "eaglet",
+      "rps": 442059,
+      "p50_us": 141.1,
+      "p99_us": 273.5,
+      "requests": 4423553
+    },
+    {
+      "round": 4,
+      "case": "GET /users/:id",
+      "framework": "eaglet",
+      "rps": 473290,
+      "p50_us": 131.1,
+      "p99_us": 274.0,
+      "requests": 4735662
+    },
+    {
+      "round": 4,
+      "case": "GET /users/:id",
+      "framework": "axum",
+      "rps": 464710,
+      "p50_us": 127.2,
+      "p99_us": 442.5,
+      "requests": 4650223
+    },
+    {
+      "round": 4,
+      "case": "POST /users (validated)",
+      "framework": "eaglet",
+      "rps": 369870,
+      "p50_us": 165.5,
+      "p99_us": 348.8,
+      "requests": 3701051
+    },
+    {
+      "round": 4,
+      "case": "POST /users (validated)",
+      "framework": "axum",
+      "rps": 363007,
+      "p50_us": 163.6,
+      "p99_us": 431.9,
+      "requests": 3632183
+    },
+    {
+      "round": 4,
+      "case": "GET /me (guarded)",
+      "framework": "eaglet",
+      "rps": 386264,
+      "p50_us": 152.9,
+      "p99_us": 528.8,
+      "requests": 3864470
+    },
+    {
+      "round": 4,
+      "case": "GET /me (guarded)",
+      "framework": "axum",
+      "rps": 430664,
+      "p50_us": 140.4,
+      "p99_us": 421.4,
+      "requests": 4309449
+    },
+    {
+      "round": 5,
+      "case": "GET /users/:id",
+      "framework": "axum",
+      "rps": 427716,
+      "p50_us": 130.1,
+      "p99_us": 507.6,
+      "requests": 4280867
+    },
+    {
+      "round": 5,
+      "case": "GET /users/:id",
+      "framework": "eaglet",
+      "rps": 316566,
+      "p50_us": 157.8,
+      "p99_us": 704.6,
+      "requests": 3168825
+    },
+    {
+      "round": 5,
+      "case": "POST /users (validated)",
+      "framework": "axum",
+      "rps": 371694,
+      "p50_us": 163.5,
+      "p99_us": 361.9,
+      "requests": 3720200
+    },
+    {
+      "round": 5,
+      "case": "POST /users (validated)",
+      "framework": "eaglet",
+      "rps": 359468,
       "p50_us": 167.4,
-      "p99_us": 745.2,
-      "requests": 3052117
-    },
-    {
-      "round": 3,
-      "case": "POST /users (validated)",
-      "framework": "axum",
-      "rps": 384490,
-      "p50_us": 158.1,
-      "p99_us": 334.3,
-      "requests": 3847100
-    },
-    {
-      "round": 3,
-      "case": "POST /users (validated)",
-      "framework": "eaglet",
-      "rps": 344209,
-      "p50_us": 176.6,
-      "p99_us": 386.0,
-      "requests": 3444342
-    },
-    {
-      "round": 3,
-      "case": "GET /me (guarded)",
-      "framework": "axum",
-      "rps": 444890,
-      "p50_us": 137.2,
-      "p99_us": 347.6,
-      "requests": 4451412
-    },
-    {
-      "round": 3,
-      "case": "GET /me (guarded)",
-      "framework": "eaglet",
-      "rps": 399281,
-      "p50_us": 156.1,
-      "p99_us": 315.2,
-      "requests": 3995333
-    },
-    {
-      "round": 4,
-      "case": "GET /users/:id",
-      "framework": "eaglet",
-      "rps": 428444,
-      "p50_us": 143.8,
-      "p99_us": 303.2,
-      "requests": 4287590
-    },
-    {
-      "round": 4,
-      "case": "GET /users/:id",
-      "framework": "axum",
-      "rps": 478376,
-      "p50_us": 126.3,
-      "p99_us": 343.8,
-      "requests": 4786553
-    },
-    {
-      "round": 4,
-      "case": "POST /users (validated)",
-      "framework": "eaglet",
-      "rps": 342551,
-      "p50_us": 176.1,
-      "p99_us": 400.4,
-      "requests": 3427653
-    },
-    {
-      "round": 4,
-      "case": "POST /users (validated)",
-      "framework": "axum",
-      "rps": 372692,
-      "p50_us": 161.2,
-      "p99_us": 380.1,
-      "requests": 3729178
-    },
-    {
-      "round": 4,
-      "case": "GET /me (guarded)",
-      "framework": "eaglet",
-      "rps": 394487,
-      "p50_us": 156.9,
-      "p99_us": 364.4,
-      "requests": 3947823
-    },
-    {
-      "round": 4,
-      "case": "GET /me (guarded)",
-      "framework": "axum",
-      "rps": 439064,
-      "p50_us": 137.6,
-      "p99_us": 377.8,
-      "requests": 4393495
-    },
-    {
-      "round": 5,
-      "case": "GET /users/:id",
-      "framework": "axum",
-      "rps": 469583,
-      "p50_us": 127.7,
-      "p99_us": 415.9,
-      "requests": 4698753
-    },
-    {
-      "round": 5,
-      "case": "GET /users/:id",
-      "framework": "eaglet",
-      "rps": 424099,
-      "p50_us": 146.1,
-      "p99_us": 317.5,
-      "requests": 4243781
-    },
-    {
-      "round": 5,
-      "case": "POST /users (validated)",
-      "framework": "axum",
-      "rps": 376397,
-      "p50_us": 161.3,
-      "p99_us": 358.1,
-      "requests": 3766239
-    },
-    {
-      "round": 5,
-      "case": "POST /users (validated)",
-      "framework": "eaglet",
-      "rps": 343605,
-      "p50_us": 177.4,
-      "p99_us": 382.1,
-      "requests": 3438102
+      "p99_us": 370.4,
+      "requests": 3597231
     },
     {
       "round": 5,
       "case": "GET /me (guarded)",
       "framework": "axum",
-      "rps": 439128,
-      "p50_us": 140.0,
-      "p99_us": 336.7,
-      "requests": 4393966
+      "rps": 290043,
+      "p50_us": 173.1,
+      "p99_us": 789.6,
+      "requests": 2903062
     },
     {
       "round": 5,
       "case": "GET /me (guarded)",
       "framework": "eaglet",
-      "rps": 403128,
-      "p50_us": 156.0,
-      "p99_us": 292.0,
-      "requests": 4033525
+      "rps": 290734,
+      "p50_us": 174.5,
+      "p99_us": 911.6,
+      "requests": 2910490
     }
   ],
   "inproc": [
@@ -332,133 +332,133 @@
       "round": 1,
       "case": "get",
       "framework": "axum",
-      "ns": 633
+      "ns": 604
     },
     {
       "round": 1,
       "case": "get",
       "framework": "eaglet",
-      "ns": 1125
+      "ns": 815
     },
     {
       "round": 1,
       "case": "post",
       "framework": "axum",
-      "ns": 1573
+      "ns": 1560
     },
     {
       "round": 1,
       "case": "post",
       "framework": "eaglet",
-      "ns": 2116
+      "ns": 1679
     },
     {
       "round": 1,
       "case": "me",
       "framework": "axum",
-      "ns": 1028
+      "ns": 972
     },
     {
       "round": 1,
       "case": "me",
       "framework": "eaglet",
-      "ns": 1471
+      "ns": 1109
     },
     {
       "round": 2,
       "case": "get",
       "framework": "axum",
-      "ns": 629
+      "ns": 600
     },
     {
       "round": 2,
       "case": "get",
       "framework": "eaglet",
-      "ns": 1156
+      "ns": 775
     },
     {
       "round": 2,
       "case": "post",
       "framework": "axum",
-      "ns": 1581
+      "ns": 1517
     },
     {
       "round": 2,
       "case": "post",
       "framework": "eaglet",
-      "ns": 2105
+      "ns": 1716
     },
     {
       "round": 2,
       "case": "me",
       "framework": "axum",
-      "ns": 996
+      "ns": 979
     },
     {
       "round": 2,
       "case": "me",
       "framework": "eaglet",
-      "ns": 1483
+      "ns": 1142
     },
     {
       "round": 3,
       "case": "get",
       "framework": "axum",
-      "ns": 634
+      "ns": 607
     },
     {
       "round": 3,
       "case": "get",
       "framework": "eaglet",
-      "ns": 1150
+      "ns": 756
     },
     {
       "round": 3,
       "case": "post",
       "framework": "axum",
-      "ns": 1634
+      "ns": 1564
     },
     {
       "round": 3,
       "case": "post",
       "framework": "eaglet",
-      "ns": 2140
+      "ns": 1687
     },
     {
       "round": 3,
       "case": "me",
       "framework": "axum",
-      "ns": 992
+      "ns": 930
     },
     {
       "round": 3,
       "case": "me",
-      "framework": "eaglet",
-      "ns": 1490
-    },
-    {
-      "round": 4,
-      "case": "get",
-      "framework": "axum",
-      "ns": 640
-    },
-    {
-      "round": 4,
-      "case": "get",
       "framework": "eaglet",
       "ns": 1126
     },
     {
       "round": 4,
+      "case": "get",
+      "framework": "axum",
+      "ns": 598
+    },
+    {
+      "round": 4,
+      "case": "get",
+      "framework": "eaglet",
+      "ns": 792
+    },
+    {
+      "round": 4,
       "case": "post",
       "framework": "axum",
-      "ns": 1598
+      "ns": 1529
     },
     {
       "round": 4,
       "case": "post",
       "framework": "eaglet",
-      "ns": 2158
+      "ns": 1695
     },
     {
       "round": 4,
@@ -470,43 +470,43 @@
       "round": 4,
       "case": "me",
       "framework": "eaglet",
-      "ns": 1452
+      "ns": 1106
     },
     {
       "round": 5,
       "case": "get",
       "framework": "axum",
-      "ns": 654
+      "ns": 621
     },
     {
       "round": 5,
       "case": "get",
       "framework": "eaglet",
-      "ns": 1135
+      "ns": 797
     },
     {
       "round": 5,
       "case": "post",
       "framework": "axum",
-      "ns": 1569
+      "ns": 1553
     },
     {
       "round": 5,
       "case": "post",
       "framework": "eaglet",
-      "ns": 2134
+      "ns": 1730
     },
     {
       "round": 5,
       "case": "me",
       "framework": "axum",
-      "ns": 1023
+      "ns": 1018
     },
     {
       "round": 5,
       "case": "me",
       "framework": "eaglet",
-      "ns": 1474
+      "ns": 1425
     }
   ]
 }

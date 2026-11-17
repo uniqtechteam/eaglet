@@ -13,28 +13,49 @@ rounds; every round is in [results.json](results.json), the medians in [results.
 
 | Route | Plain Axum | eaglet | Difference |
 |---|---|---|---|
-| `GET /users/:id` | 478,376 req/s, 634 ns | 424,099 req/s, 1,135 ns | -11.3%, +501 ns |
-| `POST /users` (validated) | 384,163 req/s, 1,581 ns | 344,209 req/s, 2,134 ns | -10.4%, +553 ns |
-| `GET /me` (guarded) | 439,128 req/s, 996 ns | 399,281 req/s, 1,474 ns | -9.1%, +478 ns |
+| `GET /users/:id` | 464,710 req/s, 604 ns | 421,057 req/s, 792 ns | -9.4%, +188 ns |
+| `POST /users` (validated) | 371,694 req/s, 1,553 ns | 359,468 req/s, 1,695 ns | -3.3%, +142 ns |
+| `GET /me` (guarded) | 441,482 req/s, 979 ns | 386,264 req/s, 1,126 ns | -12.5%, +147 ns |
 
 Requests per second are over HTTP with the server held to 4 logical CPUs; nanoseconds are the
 framework's own cost per request, called in memory on one core.
 
-**eaglet costs about half a microsecond per request over plain Axum.** When the server has nothing
-to do but answer these tiny routes, that shows up as 9 to 11% fewer requests per second. Median
-latency over HTTP moves from 126 to 145 µs on the GET route; p99 moves both ways, within the
-spread between rounds.
+**eaglet costs about 150 to 190 ns per request over plain Axum**, measured in memory. The first
+version of this bench measured about 500 ns (1,135 ns against 634 ns on the `GET` route); the
+section below says where that went.
 
-The extra time is about the same on all three routes, so it does not come from guards or
-validation; those cost what the hand-written Axum versions cost. It sits in what every request goes
-through, and most of it is the request layer every eaglet app runs first:
-it makes a trace id, keeps it in a task-local for the handler and the logs, turns error responses
-into the JSON envelope and adds the `x-request-id` header. Plain Axum in this bench does none of
-that. An Axum app that adds its own request ids and error mapping pays for them too.
+The requests per second do not show that change cleanly. The machine was shared with other work
+(load average 4.8 when the run started, 7.6 at the end), and single rounds of the same server
+moved by up to 35%: `GET /users/:id` on plain Axum ranged from 311,742 to 505,701 req/s. A 2%
+difference cannot be read from that, so the in-memory column is the one to trust here. Median
+latency over HTTP is 127 µs against 135 µs on the `GET` route.
 
-For an endpoint that reads a database or calls another service, half a microsecond is lost in the
-noise. For a service whose whole job is answering trivial routes as fast as possible, plain Axum is
-measurably faster today.
+### Where the time went
+
+The extra cost was the same on every route, so it came from the request layer every eaglet app runs
+first (trace id, `x-request-id`, error envelope), not from guards or validation. Taking that layer
+out made the `GET` route as fast as plain Axum. The layer was slow for ordinary reasons:
+
+- It was written with `axum::middleware::from_fn`, which clones and boxes the next service and
+  boxes the future on every request.
+- It built each id with a new `RandomState`, formatted it into a `String`, cloned that twice for the
+  task-local and copied it again into the header value.
+- It entered the task-local twice, once for the handler and once for the error check.
+
+It is now a small tower `Service` with its own future. A fresh id is a `u64` from a per-thread
+SplitMix64 and only becomes text when something asks for it; an incoming id keeps the header value
+it came with. The route future is polled in place with the id in scope, and the body is only read
+when an error response has to become the envelope.
+
+What is left is mostly what any `Router::layer` costs in Axum: each layered route is boxed again, so
+a request pays for one more clone and one more boxed future. A layer that does nothing at all
+measured about 100 ns on this machine, and the eaglet layer about 60 ns more than that, most of it
+the one allocation for the `x-request-id` header value. An Axum app that adds request ids with a
+layer of its own pays the same.
+
+For an endpoint that reads a database or calls another service, 150 ns is lost in the noise. For
+a service whose whole job is answering trivial routes as fast as possible, plain Axum is still a
+little faster.
 
 ## The routes
 
@@ -77,10 +98,10 @@ reads `BENCH_SERVER_CPUS`, `BENCH_LOAD_CPUS`, `BENCH_CONNECTIONS`, `BENCH_SECOND
 ## Caveats
 
 - The server and the load generator share one machine. They are on separate cores, but they share
-  caches and memory bandwidth, and other work was running on the machine (load average 6.5 when the
-  run started, 4.9 at the end). Most rounds agree within a few percent; two rounds where the machine
-  got busy are visible in `results.json`, and the median keeps them out. The in-memory numbers
-  agree within 4%.
+  caches and memory bandwidth, and other work was running on the machine (load average 4.8 when the
+  run started, 7.6 at the end). Over HTTP, single rounds moved by up to 35% when the machine got
+  busy, which is more than the difference being measured; all of them are in `results.json`. The
+  in-memory numbers agree within a few percent from round to round.
 - The routes do almost nothing on purpose, which makes the framework's share as large as it can be.
   Real handlers make it smaller.
 - One machine, one OS. Numbers on other hardware will differ; the gap in nanoseconds is the part to

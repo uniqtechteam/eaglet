@@ -445,11 +445,11 @@ and tells the client nothing. lumen is not on crates.io yet either, so these pro
 
 ## Performance
 
-eaglet costs about half a microsecond per request over the same routes in plain Axum: 1,135 ns
-against 634 ns for a JSON `GET` called in memory, and 9 to 11% fewer requests per second when a
-server held to 4 CPUs does nothing but answer tiny routes. Guards and validation cost what the
-hand-written Axum versions cost; the difference is the request layer that adds trace ids and the
-error envelope.
+eaglet costs about 150 to 190 ns per request over the same routes in plain Axum: 792 ns against
+604 ns for a JSON `GET` called in memory. Guards and validation cost what the hand-written Axum
+versions cost; the difference is the request layer that adds trace ids and the error envelope,
+and most of it is what any `Router::layer` costs in Axum. Over HTTP the gap is smaller than the
+noise between rounds on the machine we measured on.
 
 ![Requests per second and cost per request, plain Axum against eaglet](docs/img/bench-axum.svg)
 

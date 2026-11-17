@@ -143,6 +143,13 @@ impl PublicController {
     async fn trace(&self) -> String {
         eaglet::trace_id().unwrap_or_default()
     }
+
+    /// Reads the id after giving the runtime a turn, so the handler is polled more than once.
+    #[get("/trace-later")]
+    async fn trace_later(&self) -> String {
+        tokio::task::yield_now().await;
+        eaglet::trace_id().unwrap_or_default()
+    }
 }
 
 #[module(
@@ -359,6 +366,22 @@ async fn a_strange_request_id_is_replaced() {
         .unwrap();
     let reply = call(app, req).await;
     assert_eq!(reply.text.len(), 16);
+}
+
+#[tokio::test]
+async fn the_trace_id_stays_the_same_across_polls() {
+    let (app, _) = app().await;
+    let reply = call(app, get("/trace-later")).await;
+    assert_eq!(reply.text.len(), 16);
+    assert!(reply.text.bytes().all(|c| c.is_ascii_hexdigit()));
+    assert_eq!(reply.headers["x-request-id"], reply.text.as_str());
+}
+
+#[tokio::test]
+async fn the_trace_id_is_gone_after_the_request() {
+    let (app, _) = app().await;
+    call(app, get("/trace")).await;
+    assert_eq!(eaglet::trace_id(), None);
 }
 
 #[tokio::test]
