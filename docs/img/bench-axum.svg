@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="492" viewBox="0 0 680 492" font-family="system-ui, sans-serif" font-size="13" role="img" aria-label="Requests per second and cost per request, plain Axum against eaglet">
+<style>text{fill:#52514e}.v{fill:#0b0b0b}.axum{fill:#2a78d6}.eaglet{fill:#eb6834}@media (prefers-color-scheme: dark){text{fill:#c3c2b7}.v{fill:#f0efec}.axum{fill:#3987e5}.eaglet{fill:#d95926}}</style>
+<text x="0" y="18" class="v" font-size="15" font-weight="600">The same three routes in plain Axum and in eaglet</text>
+<rect class="axum" x="0" y="33" width="12" height="12" rx="2"/><text x="18" y="44">plain Axum</text><rect class="eaglet" x="110" y="33" width="12" height="12" rx="2"/><text x="128" y="44">eaglet</text>
+<text x="0" y="78" class="v" font-weight="600">Requests per second over HTTP (higher is better)</text>
+<text x="0" y="114" class="v">GET /users/:id</text>
+<rect class="axum" x="190" y="92" width="380.0" height="16" rx="4"><title>plain Axum, GET /users/:id: 478,376</title></rect><text x="576.0" y="105" class="v">478,376</text>
+<rect class="eaglet" x="190" y="110" width="336.9" height="16" rx="4"><title>eaglet, GET /users/:id: 424,099</title></rect><text x="532.9" y="123" class="v">424,099</text>
+<text x="0" y="168" class="v">POST /users (validated)</text>
+<rect class="axum" x="190" y="146" width="305.2" height="16" rx="4"><title>plain Axum, POST /users (validated): 384,163</title></rect><text x="501.2" y="159" class="v">384,163</text>
+<rect class="eaglet" x="190" y="164" width="273.4" height="16" rx="4"><title>eaglet, POST /users (validated): 344,209</title></rect><text x="469.4" y="177" class="v">344,209</text>
+<text x="0" y="222" class="v">GET /me (guarded)</text>
+<rect class="axum" x="190" y="200" width="348.8" height="16" rx="4"><title>plain Axum, GET /me (guarded): 439,128</title></rect><text x="544.8" y="213" class="v">439,128</text>
+<rect class="eaglet" x="190" y="218" width="317.2" height="16" rx="4"><title>eaglet, GET /me (guarded): 399,281</title></rect><text x="513.2" y="231" class="v">399,281</text>
+<text x="0" y="276" class="v" font-weight="600">Framework cost per request, in memory (lower is better)</text>
+<text x="0" y="312" class="v">GET /users/:id</text>
+<rect class="axum" x="190" y="290" width="112.9" height="16" rx="4"><title>plain Axum, GET /users/:id: 634 ns</title></rect><text x="308.9" y="303" class="v">634 ns</text>
+<rect class="eaglet" x="190" y="308" width="202.1" height="16" rx="4"><title>eaglet, GET /users/:id: 1,135 ns</title></rect><text x="398.1" y="321" class="v">1,135 ns</text>
+<text x="0" y="366" class="v">POST /users (validated)</text>
+<rect class="axum" x="190" y="344" width="281.5" height="16" rx="4"><title>plain Axum, POST /users (validated): 1,581 ns</title></rect><text x="477.5" y="357" class="v">1,581 ns</text>
+<rect class="eaglet" x="190" y="362" width="380.0" height="16" rx="4"><title>eaglet, POST /users (validated): 2,134 ns</title></rect><text x="576.0" y="375" class="v">2,134 ns</text>
+<text x="0" y="420" class="v">GET /me (guarded)</text>
+<rect class="axum" x="190" y="398" width="177.4" height="16" rx="4"><title>plain Axum, GET /me (guarded): 996 ns</title></rect><text x="373.4" y="411" class="v">996 ns</text>
+<rect class="eaglet" x="190" y="416" width="262.5" height="16" rx="4"><title>eaglet, GET /me (guarded): 1,474 ns</title></rect><text x="458.5" y="429" class="v">1,474 ns</text>
+<text x="0" y="462" font-size="11">12th Gen Intel(R) Core(TM) i7-12700, Linux 7.0.0-43-generic, rustc 1.100.0, oha 1.17.0</text>
+<text x="0" y="477" font-size="11">server on CPUs 0-3, oha on 4-11, 64 connections, median of 5 rounds, 2026-11-17</text>
+</svg>

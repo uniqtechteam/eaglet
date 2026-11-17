@@ -177,7 +177,7 @@ def main() -> None:
         ) + "\n"
     )
     with (bench / "results.csv").open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=list(summary[0]))
+        writer = csv.DictWriter(f, fieldnames=list(summary[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(summary)
     for row in summary:

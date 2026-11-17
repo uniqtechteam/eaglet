@@ -58,12 +58,14 @@ bottom, y = panel(
     lambda v: f"{v:,.0f} ns",
 )
 parts += bottom
-note = (
-    f'{machine["cpu"]}, {machine["os"]}, {machine["rustc"].split(" (")[0]}, {machine["oha"]}, '
-    f'{machine["connections"]} connections, median of {machine["rounds"]} rounds, {machine["date"]}'
-)
-parts.append(f'<text x="0" y="{y + 10}" font-size="11">{note}</text>')
-height = y + 22
+notes = [
+    f'{machine["cpu"]}, {machine["os"]}, {machine["rustc"].split(" (")[0]}, {machine["oha"]}',
+    f'server on CPUs {machine["server_cpus"]}, oha on {machine["load_cpus"]}, '
+    f'{machine["connections"]} connections, median of {machine["rounds"]} rounds, {machine["date"]}',
+]
+for i, note in enumerate(notes):
+    parts.append(f'<text x="0" y="{y + 10 + 15 * i}" font-size="11">{note}</text>')
+height = y + 10 + 15 * len(notes)
 svg = (
     f'<svg xmlns="http://www.w3.org/2000/svg" width="{left + width + 110}" height="{height}" '
     f'viewBox="0 0 {left + width + 110} {height}" font-family="system-ui, sans-serif" '
