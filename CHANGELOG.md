@@ -60,4 +60,8 @@ Needs Rust 1.88 or newer.
   `.override_provider::<dyn UsersRepo>(Arc::new(Fake))` or `.override_value(fake)` swaps providers (a
   wrong type does not compile), and `app.get("/users/1").send().await` runs requests in memory with
   `status()`, `header()`, `text()` and `json::<T>()` on the response.
-
+- Documentation: the README walks a NestJS developer through the shop example step by step, with
+  the NestJS code next to the eaglet code, a concept table and a diagram of the request pipeline.
+  `docs/guide.md` covers modules and providers, controllers, guards, validation, errors, layers,
+  testing, the API docs and the command line. Every Rust block in both is copied from code the
+  workspace builds and tests, and `crates/eaglet/tests/docs.rs` fails when one drifts.
