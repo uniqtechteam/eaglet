@@ -30,6 +30,7 @@ mod guard;
 mod http_error;
 mod module;
 mod openapi;
+mod serve;
 #[cfg(feature = "testing")]
 pub mod testing;
 #[cfg(feature = "validate")]

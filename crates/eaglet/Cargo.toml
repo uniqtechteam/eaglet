@@ -14,7 +14,9 @@ categories.workspace = true
 [dependencies]
 eaglet-macros.workspace = true
 axum.workspace = true
-tokio.workspace = true
+tokio = { workspace = true, features = ["signal", "time"] }
+hyper = { workspace = true }
+hyper-util = { workspace = true }
 tracing.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -38,6 +40,7 @@ testing = ["dep:http-body-util"]
 [dev-dependencies]
 eaglet = { path = ".", features = ["testing"] }
 trybuild.workspace = true
+tokio = { workspace = true, features = ["io-util", "sync"] }
 validator = { workspace = true, features = ["derive"] }
 tower.workspace = true
 http-body-util.workspace = true

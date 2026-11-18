@@ -6,6 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Fixed
+
+- `app.listen(addr)` stops on Ctrl-C or SIGTERM and lets the requests in flight finish (for up to
+  30 seconds) instead of dropping them. Before, a deploy or `docker stop` cut open requests off.
+- `app.listen(addr)` gives a client 30 seconds to send a request's headers and closes kept-alive
+  connections idle for longer, so slow or stuck clients can no longer hold connections open forever.
+
+### Added
+
+- `app.serve(listener, stop)`: the same server on a listener you bound, until a future of your
+  choice finishes.
+- Handlers served by `listen` or `serve` can read the peer address with `ConnectInfo<SocketAddr>`.
+
 ## [0.1.1] - 2026-11-17
 
 ### Changed
