@@ -129,13 +129,40 @@ impl App {
         self.finish()
     }
 
-    /// Serve the app on `addr` until the process stops.
+    /// Serve the app on `addr` until Ctrl-C or SIGTERM, then let the requests in flight finish
+    /// (for up to 30 seconds) before returning.
+    ///
+    /// A client gets 30 seconds to send a request's headers, which is also how long a kept-alive
+    /// connection may sit idle, so slow or stuck clients cannot hold connections open. Handlers
+    /// can read the peer address with `ConnectInfo<SocketAddr>`.
     ///
     /// # Errors
-    /// When the address cannot be bound or the server fails.
+    /// When the address cannot be bound.
     pub async fn listen(self, addr: impl tokio::net::ToSocketAddrs) -> std::io::Result<()> {
         let listener = tokio::net::TcpListener::bind(addr).await?;
-        axum::serve(listener, self.into_router()).await
+        self.serve(listener, crate::serve::stop_signal()).await
+    }
+
+    /// Like [`App::listen`], on a listener you bound yourself and until `stop` finishes instead of
+    /// a signal.
+    ///
+    /// ```no_run
+    /// # async fn run(app: eaglet::App) -> std::io::Result<()> {
+    /// let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    /// let (stop, stopped) = tokio::sync::oneshot::channel::<()>();
+    /// # drop(stop);
+    /// app.serve(listener, async { stopped.await.ok(); }).await
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    /// Reserved for server failures; a stop is `Ok(())`.
+    pub async fn serve(
+        self,
+        listener: tokio::net::TcpListener,
+        stop: impl Future<Output = ()> + Send,
+    ) -> std::io::Result<()> {
+        crate::serve::serve(listener, self.into_router(), stop).await
     }
 }
 
