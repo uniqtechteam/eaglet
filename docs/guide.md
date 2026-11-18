@@ -259,6 +259,8 @@ Every error leaves the app as one JSON shape:
 
 - `HttpError::internal(cause)` logs the cause with the trace id and sends only "Something went
   wrong on our side". Database errors and other surprises never reach the client.
+- A handler or guard that panics gets the same 500 envelope, and the panic is logged with the
+  trace id. The connection stays usable and the panic message is not sent.
 - Axum's own errors, such as an unknown path (404), a wrong method (405, with its `Allow` header)
   or a rejected extractor, are turned into the same shape.
 - Each request gets a trace id. It comes back in the `x-request-id` header and as `traceId`, and

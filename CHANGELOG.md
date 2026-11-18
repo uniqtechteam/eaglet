@@ -12,6 +12,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   30 seconds) instead of dropping them. Before, a deploy or `docker stop` cut open requests off.
 - `app.listen(addr)` gives a client 30 seconds to send a request's headers and closes kept-alive
   connections idle for longer, so slow or stuck clients can no longer hold connections open forever.
+- A handler or guard that panics answers 500 `INTERNAL_ERROR` in the envelope, with the trace id,
+  instead of closing the connection with no response.
 
 ### Added
 
