@@ -126,7 +126,7 @@ fn db_setup(db: Db, krate: &str, lumen: &Source) -> (String, String, Option<&'st
         ),
         Db::None => (String::new(), String::new(), None),
         Db::Postgres => (
-            "sqlx = { version = \"0.9\", default-features = false, features = [\"runtime-tokio\", \"postgres\"] }\n".to_owned(),
+            "sqlx = { version = \"0.9\", default-features = false, features = [\"runtime-tokio\", \"postgres\", \"tls-rustls-ring-webpki\"] }\n".to_owned(),
             format!("DATABASE_URL=postgres://postgres:postgres@localhost/{krate}"),
             Some(include_str!("../templates/db/postgres.rs.tmpl")),
         ),
