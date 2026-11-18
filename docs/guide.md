@@ -446,6 +446,44 @@ $ eaglet g resource products
 error: src/products already exists; pick another name or add parts with eaglet g controller|service
 ```
 
+## Running in production
+
+`app.listen(addr)` already does the parts every server needs. It gives a client 30 seconds to send
+a request's headers, so a slow or stuck client cannot hold a connection open, and on Ctrl-C or
+SIGTERM it stops accepting and lets the requests in flight finish for up to 30 seconds. Request
+bodies are capped at 2 MB by Axum's default limit; raise or lower it with `DefaultBodyLimit`. A
+panicking handler answers 500 in the envelope and the server keeps going.
+
+The rest depends on the app, so eaglet leaves it to layers. A typical setup with
+[`tower-http`](https://docs.rs/tower-http):
+
+```rust
+use std::time::Duration;
+use tower_http::cors::CorsLayer;
+use tower_http::set_header::SetResponseHeaderLayer;
+use tower_http::timeout::TimeoutLayer;
+// ...
+let app = App::new::<AppModule>()
+    .await?
+    .layer(TimeoutLayer::with_status_code(
+        StatusCode::REQUEST_TIMEOUT,
+        Duration::from_secs(15),
+    ))
+    .layer(SetResponseHeaderLayer::if_not_present(
+        header::X_CONTENT_TYPE_OPTIONS,
+        HeaderValue::from_static("nosniff"),
+    ))
+    .layer(CorsLayer::new().allow_origin(["https://app.example.com".parse()?]));
+```
+
+Rate limiting is usually done at the proxy in front of the app. To do it in the app, a layer such
+as `tower_governor` can key on the peer address, which `listen` puts in every request as
+`ConnectInfo<SocketAddr>`. Behind a proxy, key on the header it sets instead.
+
+Projects made by `eaglet new` serve Swagger UI only in debug builds, or when `API_DOCS=true`, and
+their Dockerfile runs the server as a non-root user. `/health` answers while the process runs; if
+your load balancer should wait for the database, add a route that runs a cheap query.
+
 ## Using eaglet inside an Axum app
 
 `App` is a thin layer over Axum. `app.into_router()` returns the finished `axum::Router`, with the

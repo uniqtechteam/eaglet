@@ -14,6 +14,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   connections idle for longer, so slow or stuck clients can no longer hold connections open forever.
 - A handler or guard that panics answers 500 `INTERNAL_ERROR` in the envelope, with the trace id,
   instead of closing the connection with no response.
+- `eaglet new`: the Dockerfile builds on the newest Rust 1.x. With `rust:1.88` the build of a
+  `--db postgres` or `--db sqlite` project failed, because sqlx 0.9 needs Rust 1.94.
+- `eaglet new --db postgres` turns on sqlx's rustls support, so `sslmode=require` URLs (what most
+  hosted Postgres services hand out) connect.
+
+### Changed
+
+- `eaglet new`: Swagger UI at `/docs` is on in debug builds and off in release builds unless
+  `API_DOCS=true`. The Dockerfile caches the registry and `target` between builds, and logs are
+  plain text when they do not go to a terminal.
 
 ### Added
 
