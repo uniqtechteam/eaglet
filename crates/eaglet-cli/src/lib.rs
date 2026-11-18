@@ -56,7 +56,7 @@ pub enum Source {
 }
 
 /// The version of `lumen-orm` that `--db lumen-*` projects use.
-pub const LUMEN_VERSION: &str = "0.1";
+pub const LUMEN_VERSION: &str = "0.2";
 
 fn render(template: &str, vars: &[(&str, &str)]) -> String {
     let mut out = template.to_owned();
