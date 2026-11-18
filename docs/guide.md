@@ -284,7 +284,9 @@ async fn no_store(mut res: Response) -> Response {
 Controller layers run outside the controller's guards, so they also see the requests a guard
 turns away. Under the hood each one is Axum's `route_layer`, so layers from
 [`tower-http`](https://docs.rs/tower-http) fit the same way they do in a plain Axum app. For
-layers around the whole app, take the router with `app.into_router()` and add them there.
+layers around the whole app, such as a request timeout, CORS or security headers, call
+`app.layer(..)`. Those run inside the error envelope too, so a `408` from a timeout layer comes
+back as the envelope with its trace id.
 
 ## Testing
 

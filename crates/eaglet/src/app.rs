@@ -66,6 +66,31 @@ impl App {
         self
     }
 
+    /// Wrap every route of the app, and the 404 for unknown paths, in a Tower layer: a timeout,
+    /// CORS, security headers, compression. Layers added later run first. They run inside the
+    /// error envelope, so an error they answer with (a `408` from a timeout, say) gets the
+    /// envelope and the trace id like any other. The Swagger UI pages are not wrapped.
+    ///
+    /// ```ignore
+    /// let app = App::new::<AppModule>()
+    ///     .await?
+    ///     .layer(TimeoutLayer::with_status_code(StatusCode::REQUEST_TIMEOUT, Duration::from_secs(10)));
+    /// ```
+    #[must_use]
+    pub fn layer<L>(mut self, layer: L) -> Self
+    where
+        L: tower::Layer<axum::routing::Route> + Clone + Send + Sync + 'static,
+        L::Service: tower::Service<axum::extract::Request> + Clone + Send + Sync + 'static,
+        <L::Service as tower::Service<axum::extract::Request>>::Response:
+            axum::response::IntoResponse + 'static,
+        <L::Service as tower::Service<axum::extract::Request>>::Error:
+            Into<std::convert::Infallible> + 'static,
+        <L::Service as tower::Service<axum::extract::Request>>::Future: Send + 'static,
+    {
+        self.routes = self.routes.layer(layer);
+        self
+    }
+
     /// The OpenAPI 3.1 document for every route, for example to write it to a file and generate a
     /// client from it.
     #[cfg(feature = "openapi")]

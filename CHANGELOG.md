@@ -20,6 +20,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - `app.serve(listener, stop)`: the same server on a listener you bound, until a future of your
   choice finishes.
 - Handlers served by `listen` or `serve` can read the peer address with `ConnectInfo<SocketAddr>`.
+- `app.layer(..)` wraps every route, and the 404 for unknown paths, in a Tower layer, inside the
+  error envelope. Use it for a request timeout, CORS or security headers across the whole app.
 
 ## [0.1.1] - 2026-11-17
 
