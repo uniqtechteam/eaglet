@@ -9,11 +9,12 @@ use std::cell::Cell;
 use std::convert::Infallible;
 use std::future::Future;
 use std::hash::{BuildHasher, RandomState};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use axum::extract::Request;
-use axum::http::{HeaderName, HeaderValue, header};
+use axum::http::{HeaderName, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use tower::{Layer, Service};
 
@@ -186,11 +187,28 @@ where
         let done = TRACE_ID.sync_scope(id, || {
             loop {
                 let res = match &mut this.state {
-                    State::Inner(fut) => match Pin::new(fut).poll(cx) {
-                        Poll::Ready(Ok(res)) => res,
-                        Poll::Ready(Err(never)) => match never {},
-                        Poll::Pending => return Poll::Pending,
-                    },
+                    State::Inner(fut) => {
+                        // a panicking handler answers 500 instead of dropping the connection
+                        match catch_unwind(AssertUnwindSafe(|| Pin::new(fut).poll(cx))) {
+                            Ok(Poll::Ready(Ok(res))) => res,
+                            Ok(Poll::Ready(Err(never))) => match never {},
+                            Ok(Poll::Pending) => return Poll::Pending,
+                            Err(_) => {
+                                tracing::error!(
+                                    trace_id = trace_id().as_deref(),
+                                    "the handler panicked"
+                                );
+                                return Poll::Ready(
+                                    HttpError::new(
+                                        StatusCode::INTERNAL_SERVER_ERROR,
+                                        "INTERNAL_ERROR",
+                                        "Something went wrong on our side",
+                                    )
+                                    .into_response(),
+                                );
+                            }
+                        }
+                    }
                     State::Envelope(fut) => match fut.as_mut().poll(cx) {
                         Poll::Ready(res) => return Poll::Ready(res),
                         Poll::Pending => return Poll::Pending,
