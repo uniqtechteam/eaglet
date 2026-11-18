@@ -7,6 +7,9 @@ use eaglet::prelude::*;
 pub struct Config {
     /// `PORT`, 3000 by default.
     pub port: u16,
+    /// `API_DOCS`: serve Swagger UI at `/docs`. On in debug builds; in release builds only when
+    /// set to `true`, so a production server does not publish its API map by accident.
+    pub api_docs: bool,
 }
 
 impl Config {
@@ -17,7 +20,9 @@ impl Config {
             .ok()
             .and_then(|p| p.parse().ok())
             .unwrap_or(3000);
-        Self { port }
+        let api_docs = std::env::var("API_DOCS")
+            .map_or(cfg!(debug_assertions), |v| v == "true" || v == "1");
+        Self { port, api_docs }
     }
 }
 

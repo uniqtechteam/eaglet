@@ -1,5 +1,6 @@
 //! {{title}}: the HTTP server.
 
+use std::io::IsTerminal;
 use std::net::SocketAddr;
 
 use eaglet::App;
@@ -10,15 +11,23 @@ use {{crate}}::config::Config;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"));
-    tracing_subscriber::fmt().with_env_filter(filter).init();
+    // plain text when the output is not a terminal, so container logs carry no colour codes
+    tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_ansi(std::io::stdout().is_terminal())
+        .init();
 
     let config = Config::from_env();
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
-    let app = App::new::<AppModule>()
+    let mut app = App::new::<AppModule>()
         .await?
-        .with_info("{{title}}", env!("CARGO_PKG_VERSION"))
-        .swagger("/docs");
-    tracing::info!("listening on http://{addr}, API docs at /docs");
+        .with_info("{{title}}", env!("CARGO_PKG_VERSION"));
+    if config.api_docs {
+        app = app.swagger("/docs");
+        tracing::info!("API docs at /docs");
+    }
+    tracing::info!("listening on http://{addr}");
+    // stops on Ctrl-C or SIGTERM once the requests in flight are done
     app.listen(addr).await?;
     Ok(())
 }
