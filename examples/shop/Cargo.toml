@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 eaglet.workspace = true
-argon2 = "0.5"
+argon2 = "0.6"
 async-trait = "0.1"
 jsonwebtoken = { version = "9", default-features = false }
 password-hash = { version = "0.5", features = ["getrandom"] }
