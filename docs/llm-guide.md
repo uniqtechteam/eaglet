@@ -516,7 +516,8 @@ async fn the_api_docs_list_the_health_route() {
 
 ## lumen
 
-[lumen](https://github.com/uniqtechteam/lumen) is a Prisma-style data layer. With
+[lumen](https://github.com/uniqtechteam/lumen) turns a schema file into migrations, a typed client
+and a query builder, for Postgres and MongoDB. With
 `eaglet new shop --db lumen-postgres` (or `lumen-mongo`) the project gets:
 
 - `prisma/schema.prisma`, the data model;
