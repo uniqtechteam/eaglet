@@ -11,7 +11,7 @@ publish = false
 eaglet.workspace = true
 argon2 = "0.5"
 async-trait = "0.1"
-jsonwebtoken = { version = "9", default-features = false }
+jsonwebtoken = { version = "12", default-features = false }
 password-hash = { version = "0.5", features = ["getrandom"] }
 serde.workspace = true
 serde_json.workspace = true
