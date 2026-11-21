@@ -390,10 +390,11 @@ the same instructions as every other agent.
 
 ## With lumen
 
-[lumen](https://github.com/uniqtechteam/lumen) is our Prisma-style data layer for Rust.
+[lumen](https://github.com/uniqtechteam/lumen) is our data layer: it turns a schema file into
+migrations, a typed client and a query builder, for Postgres and MongoDB.
 `eaglet new shop --db lumen-postgres` (or `lumen-mongo`) starts the project with a
 `prisma/schema.prisma`, a `LumenModule` that provides the generated `Client`, and this function for
-turning lumen's Prisma error codes into answers:
+turning lumen's error codes into answers:
 
 ```rust
 pub fn http(e: lumen_orm::Error) -> HttpError {
